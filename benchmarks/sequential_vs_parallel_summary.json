@@ -1,0 +1,172 @@
+{
+  "environment": {
+    "model": "ag/gemini-3.8-flash",
+    "llm_proxy": "http://localhost:20128/v1",
+    "cdp_port": 9222,
+    "tabs_used": [
+      "F88E1E9F399B4F7EF2F2DCA1AD9E395C",
+      "F508C3B6EA3FAA8A06EEAF03149BBDB9"
+    ],
+    "trial_count": 5
+  },
+  "trials": {
+    "sequential": [
+      {
+        "mode": "sequential",
+        "total_wall_ms": 25337.544749956578,
+        "llm_time_ms": 24302.321374008898,
+        "llm_calls": 3,
+        "browser_time_ms": 1034.8439160152338,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "success": true,
+        "extracted_specs": "* **CPU:** Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n* **RAM:** 32GB LPDDR5 (6400MHz, dual-channel).\n* **Battery:** 75Wh Lithium-Ion (rated up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal price: \u20b976,499 (discounted from \u20b984,990).\n\nRating/verdict: Not present in the provided text.",
+        "summary": "The laptop provides high performance for \u20b976,499, discounted from \u20b984,990. \n\nRecommend purchase for heavy multitasking, software development, and productivity workloads. The 14-core Intel Core i7-13700H paired with 32GB LPDDR5 RAM delivers strong processing capacity and memory bandwidth. The 75Wh battery provides adequate capacity to support the high-power H-series processor.\n\nCheck thermal performance and display specifications before purchase, as user reviews and chassis ratings are unavailable."
+      },
+      {
+        "mode": "sequential",
+        "total_wall_ms": 23710.960791970138,
+        "llm_time_ms": 22671.711458067875,
+        "llm_calls": 3,
+        "browser_time_ms": 1039.1180419828743,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "success": true,
+        "extracted_specs": "- CPU: Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz)\n- RAM: 32GB LPDDR5 6400MHz dual-channel\n- Battery: 75Wh Lithium-Ion (rated up to 12.5 hours mixed use)",
+        "extracted_reviews": "Deal price: \u20b976,499 (reduced from \u20b984,990).\nOverall rating/verdict: Missing from the provided text. Provide the review or rating snippet to extract this.",
+        "summary": "This laptop is recommended for intensive workloads and multitasking. \n\nThe Intel Core i7-13700H processor paired with 32GB LPDDR5 6400MHz RAM delivers high compute performance. The 75Wh battery provides up to 12.5 hours of runtime for mobile use. At the discounted price of \u20b976,499, the hardware specifications offer strong value.\n\nReview data is missing. Provide the review or rating snippet to assess display quality, thermals, and build reliability before final purchase."
+      },
+      {
+        "mode": "sequential",
+        "total_wall_ms": 25434.395165997557,
+        "llm_time_ms": 24401.298750017304,
+        "llm_calls": 3,
+        "browser_time_ms": 1032.9557079821825,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "success": true,
+        "extracted_specs": "- CPU: Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n- RAM: 32GB LPDDR5 (6400MHz, dual-channel).\n- Battery: 75Wh lithium-ion (rated up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal Price: \u20b976,499 (discounted from \u20b984,990, with an additional 10% instant bank discount available).\n\nRating/Verdict: Missing from the provided text. Provide the review or rating section to extract it.",
+        "summary": "The laptop is a strong value for performance-focused users. \n\nBuy this model for software development, heavy multitasking, and content creation. The 14-core Intel Core i7-13700H paired with 32GB LPDDR5 RAM prevents memory bottlenecks under intensive workloads. The 75Wh battery offers solid endurance for a high-wattage H-series processor. At \u20b976,499 before bank discounts, the hardware configuration is priced aggressively.\n\nCheck third-party reviews for thermal management and display color accuracy before purchase to confirm chassis build quality."
+      },
+      {
+        "mode": "sequential",
+        "total_wall_ms": 23281.470457965042,
+        "llm_time_ms": 22253.684042952955,
+        "llm_calls": 3,
+        "browser_time_ms": 1027.5360419764183,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "success": true,
+        "extracted_specs": "- CPU: Intel Core i7-13700H, 14 cores, 20 threads, up to 5.0 GHz.\n- RAM: 32GB LPDDR5, 6400MHz, dual-channel.\n- Battery: 75Wh Lithium-Ion, rated for up to 12.5 hours of mixed use.",
+        "extracted_reviews": "Deal price: \u20b976,499 (reduced from \u20b984,990), with an additional 10% instant bank discount available.\n\nRating/Verdict: Not present in the provided text. Provide the review or rating snippet to extract this information.",
+        "summary": "This laptop is recommended for demanding productivity, software development, and heavy multitasking. \n\nThe Intel Core i7-13700H processor paired with 32GB of high-speed LPDDR5 RAM delivers strong compute and multitasking performance. The 75Wh battery provides sufficient capacity for extended mixed use. At the deal price of \u20b976,499, further reduced by the 10% instant bank discount, the system offers high value for this hardware tier.\n\nProvide the review or rating snippets to evaluate thermal performance, display quality, and chassis durability before finalizing the purchase."
+      },
+      {
+        "mode": "sequential",
+        "total_wall_ms": 23076.79324998753,
+        "llm_time_ms": 22036.418917006813,
+        "llm_calls": 3,
+        "browser_time_ms": 1040.2422089246102,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "success": true,
+        "extracted_specs": "* **CPU:** Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz)\n* **RAM:** 32GB LPDDR5 (6400MHz, dual-channel)\n* **Battery:** 75Wh Lithium-Ion (up to 12.5 hours mixed use)",
+        "extracted_reviews": "Deal price: \u20b976,499 (discounted from \u20b984,990, with an additional 10% bank discount available).\n\nRating/verdict: Not present in the provided text.",
+        "summary": "This laptop offers high-tier performance and solid battery life at a competitive price point. \n\nThe Intel Core i7-13700H processor and 32GB of high-speed LPDDR5 RAM handle demanding multitasking, compilation, and content creation workloads efficiently. The 75Wh battery provides up to 12.5 hours of mixed use, ensuring all-day portability. At \u20b976,499 down from \u20b984,990, with an extra 10% bank discount, the price-to-performance ratio is exceptionally strong. \n\nRecommendation: Purchase this machine for intensive productivity, programming, or heavy multitasking. \n\nNext step: Verify thermal performance and display specifications, as formal review ratings are omitted from the data."
+      }
+    ],
+    "parallel": [
+      {
+        "mode": "parallel",
+        "total_wall_ms": 16495.318291999865,
+        "llm_time_ms": 22461.968583986163,
+        "llm_calls": 3,
+        "browser_time_ms": 1057.0554590085521,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "orchestration_overhead_ms": 0.7335830014199018,
+        "success": true,
+        "extracted_specs": "* **CPU:** Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n* **RAM:** 32GB LPDDR5 (6400MHz, dual-channel).\n* **Battery:** 75Wh Lithium-Ion (rated up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal price: \u20b976,499 (discounted from \u20b984,990).\nRating/verdict: Not present in the provided text.",
+        "summary": "Buy this laptop if you need a high-performance machine for heavy multitasking, development, or content creation. \n\nThe Intel Core i7-13700H paired with 32GB LPDDR5 RAM offers exceptional processing power rarely matched at the discounted \u20b976,499 price point. The 75Wh battery provides adequate capacity to balance the high-power H-series processor for mobile use. \n\nUser ratings and detailed reviews are missing from the data. Next step: verify independent thermal performance and display specifications before purchase, as high-power CPUs can throttle in compact chassis."
+      },
+      {
+        "mode": "parallel",
+        "total_wall_ms": 20951.7147919978,
+        "llm_time_ms": 28420.222208020277,
+        "llm_calls": 3,
+        "browser_time_ms": 1060.2019170182757,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "orchestration_overhead_ms": 0.7957920315675437,
+        "success": true,
+        "extracted_specs": "- CPU: Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n- RAM: 32GB LPDDR5 6400MHz (dual-channel).\n- Battery: 75Wh Lithium-Ion (rated up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal price: \u20b976,499, discounted from an original price of \u20b984,990. \n\nOverall rating and verdict: Not present in the provided text. Provide the review or rating snippet to extract this data.",
+        "summary": "This laptop offers strong value at \u20b976,499 (discounted from \u20b984,990) for demanding productivity, multitasking, and development workloads. The Intel Core i7-13700H processor and 32GB LPDDR5 RAM deliver high compute performance, while the 75Wh battery provides substantial capacity for an H-series CPU. \n\nProvide user reviews or rating data to evaluate thermal management, build quality, and display performance before purchasing."
+      },
+      {
+        "mode": "parallel",
+        "total_wall_ms": 15922.865333035588,
+        "llm_time_ms": 22592.946666060016,
+        "llm_calls": 3,
+        "browser_time_ms": 1079.2700410238467,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "orchestration_overhead_ms": 0.8480839896947145,
+        "success": true,
+        "extracted_specs": "* CPU: Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n* RAM: 32GB LPDDR5 (6400MHz dual-channel).\n* Battery: 75Wh Lithium-Ion (rated up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal price: \u20b976,499 (reduced from \u20b984,990).\nOverall rating/verdict: Not present in the provided text. Provide the review or rating snippet to extract it.",
+        "summary": "This laptop is recommended for intensive workloads, multitasking, and software development. \n\nThe Intel Core i7-13700H processor paired with 32GB LPDDR5 RAM delivers top-tier performance at \u20b976,499. The 75Wh battery balances this high power draw with solid mixed-use endurance rated up to 12.5 hours. \n\nUser reviews and thermal data are missing from the findings. Verify display quality, cooling performance, and build reliability through user feedback before purchase."
+      },
+      {
+        "mode": "parallel",
+        "total_wall_ms": 14420.516708982177,
+        "llm_time_ms": 20585.72945796186,
+        "llm_calls": 3,
+        "browser_time_ms": 1058.6052080034278,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "orchestration_overhead_ms": 0.5014599882997572,
+        "success": true,
+        "extracted_specs": "* **CPU:** Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n* **RAM:** 32GB LPDDR5 6400MHz dual-channel.\n* **Battery:** 75Wh Lithium-Ion (up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal price is \u20b976,499, discounted from \u20b984,990. \n\nOverall rating or verdict is missing from the provided text. Provide the text section containing user reviews or the rating score to extract that data.",
+        "summary": "This laptop offers strong value for heavy multitasking, software development, and content creation at the discounted price of \u20b976,499. The 14-core Intel Core i7-13700H paired with 32GB high-speed LPDDR5 RAM ensures high compute performance, while the 75Wh battery provides dependable all-day battery life. \n\nThermal performance, display accuracy, and chassis quality remain unverified because user reviews and ratings are missing. \n\nProvide user reviews or target workload details to finalize the purchase decision."
+      },
+      {
+        "mode": "parallel",
+        "total_wall_ms": 15904.001250048168,
+        "llm_time_ms": 21788.260083063506,
+        "llm_calls": 3,
+        "browser_time_ms": 1097.0619160216302,
+        "browser_calls": 4,
+        "navigation_count": 2,
+        "orchestration_overhead_ms": 0.5605840124189854,
+        "success": true,
+        "extracted_specs": "- CPU: Intel Core i7-13700H (14 cores, 20 threads, up to 5.0 GHz).\n- RAM: 32GB LPDDR5 (6400MHz, Dual-Channel).\n- Battery: 75Wh Lithium-Ion (up to 12.5 hours mixed use).",
+        "extracted_reviews": "Deal Price: \u20b976,499 (reduced from \u20b984,990, with an additional 10% instant bank discount available).\n\nRating/Verdict: Not present in the provided text.",
+        "summary": "**Recommendation: Buy**\n\nThe laptop features a 14-core Intel Core i7-13700H, 32GB fast LPDDR5 RAM, and a 75Wh battery. Purchase it for software development, heavy multitasking, and general productivity. The deal price of \u20b976,499 offers high compute density and memory capacity for this price bracket. \n\nNext step: Apply the additional 10% bank discount at checkout to maximize savings."
+      }
+    ]
+  },
+  "stats": {
+    "sequential_wall_ms": {
+      "count": 5,
+      "mean": 24168.23,
+      "p50": 23710.96,
+      "min": 23076.79,
+      "max": 25434.4
+    },
+    "parallel_wall_ms": {
+      "count": 5,
+      "mean": 16738.88,
+      "p50": 15922.87,
+      "min": 14420.52,
+      "max": 20951.71
+    },
+    "absolute_saved_ms": 7788.09,
+    "percentage_reduction_pct": 32.85,
+    "speedup_ratio": 1.49
+  }
+}
