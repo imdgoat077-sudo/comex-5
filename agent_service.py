@@ -20,7 +20,7 @@ import logging
 
 from langchain_openai import ChatOpenAI
 from typing import Optional, Any
-from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from langchain_core.tools import tool
 
 # Load environment variables
@@ -345,6 +345,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ConversationMessage(BaseModel):
+    role: str  # "user" | "assistant" | "system"
+    content: str
+    task_outcome: dict | None = None
+
 class AgentRequest(BaseModel):
     use_procedures: bool = False
     procedure_mode: str = "none"  # "none", "blind", "gated"
@@ -354,6 +359,9 @@ class AgentRequest(BaseModel):
     url: str | None = None
     taskId: str
     intent: str = "UNKNOWN"
+    conversation_id: str | None = None
+    messages: list[ConversationMessage] | None = None
+    task_context: dict | None = None
     workerId: str | None = None
     workerToken: str | None = None
     contextToken: str | None = None
@@ -499,6 +507,15 @@ Guidelines:
 - For actionable requests (e.g. searching, navigating pages, interacting with websites, inspecting content), call the appropriate tool.
 - For conversational greetings, simple questions, or chit-chat (e.g. "hi", "who are you", "what can you do?"), DO NOT invoke any tools. Respond naturally, politely, and directly in plain text.
 - Never output an empty message.
+
+CONVERSATIONAL CONTINUITY & MULTI-TURN RULES:
+- You maintain continuity across multiple user turns within the same conversation.
+- When the user asks a follow-up question or uses pronouns/implicit references (e.g. "it", "this book", "that one", "the second option", "what was its price?", "do you think it is the best?"):
+  1. Resolve the reference using the recent conversation history and any recent task outcomes provided in context. For example, if you just added a book to the cart and the user asks "Do you think it is the best?", "it" refers directly to that specific book.
+  2. Answer the question directly using your knowledge, reasoning, and context. If comparative analysis requires criteria, provide your evaluation for that specific item. Never claim context is missing when an entity was explicitly discussed in recent turns.
+  3. Action Safety: NEVER repeat a browser action that was already completed (e.g. DO NOT click "add to cart" again when answering a question about the added item).
+  4. Distinguish questions from action requests: answering questions about a completed task requires explanation or evaluation in plain text, not re-executing actions.
+  5. Only ask for clarification if there is genuine ambiguity between multiple candidate referents that cannot be resolved from context.
 
 GRAPH MEMORY RETRIEVAL, ARTIFACTS, & AUTOMATIC CONTEXT:
 Persistent memory context may appear automatically at the end of the user's prompt. 
@@ -1344,6 +1361,9 @@ async def execute_agent_loop(
     worker_token: Optional[str] = None,
     legacy_mode: bool = False,
     tool_service: Optional[Any] = None,
+    conversation_id: Optional[str] = None,
+    conversation_messages: Optional[list[Any]] = None,
+    task_context: Optional[dict] = None,
 ) -> AgentLoopResult:
     timing = {
         "memory_prep_ms": 0.0,
@@ -1375,6 +1395,8 @@ async def execute_agent_loop(
         "tab_id": tab_id,
         "trusted_app_context": trusted_app_context,
         "legacy_mode": legacy_mode,
+        "conversation_id": conversation_id,
+        "task_context": task_context,
     }
     loop_start_time = time.monotonic()
     agent_id = str(uuid.uuid4())
@@ -1818,10 +1840,49 @@ Schema:
 
     antipatterns_text = locals().get("antipatterns_text", "")
     timing["memory_prep_ms"] = round((time.perf_counter() - t_mem_start) * 1000.0, 2)
-    messages = [
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=task + self_healing_context + auto_context_text + user_context_text + domain_skills_text + antipatterns_text + procedure_context_text)
-    ]
+    # --- Phase 2.3: Multi-Turn Conversation History & Task Context Construction ---
+    prompt_messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    
+    # Bounded conversation history: take at most the last 10 messages
+    if conversation_messages:
+        bounded_history = conversation_messages[-10:]
+        for msg in bounded_history:
+            role = msg.role if hasattr(msg, "role") else msg.get("role") if isinstance(msg, dict) else ""
+            content = msg.content if hasattr(msg, "content") else msg.get("content") if isinstance(msg, dict) else ""
+            if not content or not isinstance(content, str):
+                continue
+            clipped_content = content[:2000].strip()
+            if not clipped_content:
+                continue
+            if role == "user":
+                prompt_messages.append(HumanMessage(content=clipped_content))
+            elif role == "assistant":
+                prompt_messages.append(AIMessage(content=clipped_content))
+
+    # Format verified task context block if prior task outcome exists
+    task_context_block = ""
+    if task_context and isinstance(task_context, dict):
+        tc_lines = ["\n[RECENT TASK OUTCOME (VERIFIED)]:"]
+        product_or_entity = task_context.get("product") or task_context.get("entity_name") or task_context.get("entity")
+        if product_or_entity:
+            tc_lines.append(f"- Entity / Subject: {product_or_entity}")
+        if task_context.get("action"):
+            tc_lines.append(f"- Action Completed: {task_context['action']}")
+        if task_context.get("status"):
+            tc_lines.append(f"- Status: {task_context['status']}")
+        if task_context.get("url"):
+            tc_lines.append(f"- Relevant URL: {task_context['url']}")
+        if task_context.get("price"):
+            tc_lines.append(f"- Price / Value: {task_context['price']}")
+        if task_context.get("details"):
+            tc_lines.append(f"- Details: {str(task_context['details'])[:300]}")
+        tc_lines.append("Use this outcome to resolve references (e.g. 'it', 'the book', 'that item') without re-executing already completed actions.")
+        task_context_block = "\n".join(tc_lines) + "\n"
+
+    # Current user turn
+    current_turn_content = task + (f"\n{task_context_block}" if task_context_block else "") + self_healing_context + auto_context_text + user_context_text + domain_skills_text + antipatterns_text + procedure_context_text
+    prompt_messages.append(HumanMessage(content=current_turn_content))
+    messages = prompt_messages
     
     def _invoke_tool(tool_obj, args: dict, tool_name: str) -> str:
         """Invoke a LangChain tool, returning a structured error string on
@@ -1909,15 +1970,25 @@ Schema:
                 timing["total_duration_ms"] = round(metadata["duration_seconds"] * 1000.0, 2)
                 metadata["is_conversational"] = is_conversational
 
+                if has_run_tools and "task_outcome" not in metadata:
+                    last_trace = metadata["tool_traces"][-1] if metadata["tool_traces"] else None
+                    outcome_status = "success" if metadata.get("failed_tool_call_count", 0) == 0 else "partial"
+                    metadata["task_outcome"] = {
+                        "action": last_trace["tool"] if last_trace else "browser_action",
+                        "status": outcome_status,
+                        "url": default_cdp_url if default_cdp_url.startswith("http") else None,
+                        "details": _final[:200]
+                    }
+
                 await _emit("completed", {
                     "type": event_type,
                     "is_conversational": is_conversational,
-
                     "content": _final,
                     "text": _final,
                     "result": _final,
                     "done": True,
-                    "duration_seconds": metadata["duration_seconds"]
+                    "duration_seconds": metadata["duration_seconds"],
+                    "task_outcome": metadata.get("task_outcome")
                 })
                 return AgentLoopResult(_final, metadata)
 
@@ -2124,22 +2195,23 @@ async def run_agent(request: AgentRequest, raw_req: Request = None):
         loop_kwargs = {}
         try:
             sig = inspect.signature(execute_agent_loop)
-            if "intent" in sig.parameters:
-                loop_kwargs["intent"] = request.intent
-            if "use_procedures" in sig.parameters:
-                loop_kwargs["use_procedures"] = request.use_procedures
-            if "procedure_mode" in sig.parameters:
-                loop_kwargs["procedure_mode"] = request.procedure_mode
-            if "use_graph" in sig.parameters:
-                loop_kwargs["use_graph"] = request.use_graph
-            if "worker_id" in sig.parameters:
-                loop_kwargs["worker_id"] = request.workerId
-            if "tab_id" in sig.parameters:
-                loop_kwargs["tab_id"] = request.tabId
-            if "trusted_app_context" in sig.parameters:
-                loop_kwargs["trusted_app_context"] = is_trusted
-            if "worker_token" in sig.parameters:
-                loop_kwargs["worker_token"] = request.workerToken
+            has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+            candidate_kwargs = [
+                ("intent", request.intent),
+                ("use_procedures", request.use_procedures),
+                ("procedure_mode", request.procedure_mode),
+                ("use_graph", request.use_graph),
+                ("worker_id", request.workerId),
+                ("tab_id", request.tabId),
+                ("trusted_app_context", is_trusted),
+                ("worker_token", request.workerToken),
+                ("conversation_id", request.conversation_id),
+                ("conversation_messages", request.messages),
+                ("task_context", request.task_context),
+            ]
+            for k, v in candidate_kwargs:
+                if has_var_kw or k in sig.parameters:
+                    loop_kwargs[k] = v
         except Exception:
             loop_kwargs = {
                 "intent": request.intent,
@@ -2147,6 +2219,9 @@ async def run_agent(request: AgentRequest, raw_req: Request = None):
                 "tab_id": request.tabId,
                 "trusted_app_context": is_trusted,
                 "worker_token": request.workerToken,
+                "conversation_id": request.conversation_id,
+                "conversation_messages": request.messages,
+                "task_context": request.task_context,
             }
 
         agent_task = asyncio.create_task(execute_agent_loop(
@@ -2291,6 +2366,9 @@ async def run_agent_stream(request: AgentRequest, raw_req: Request = None):
                 "tab_id": request.tabId,
                 "trusted_app_context": is_trusted,
                 "worker_token": request.workerToken,
+                "conversation_id": request.conversation_id,
+                "conversation_messages": request.messages,
+                "task_context": request.task_context,
             }
 
             loop_res = await execute_agent_loop(request.task, target_cdp_url, **loop_kwargs)

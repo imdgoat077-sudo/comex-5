@@ -41,6 +41,7 @@ export default function ChatDrawer({
   onAddTab
 }) {
   const [isMultiAgentMode, setIsMultiAgentMode] = useState(false); // default: browser-use Single Agent path
+  const [conversationId, setConversationId] = useState(() => 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
   const [messages, setMessages] = useState([
     {
       id: 'm1',
@@ -222,10 +223,10 @@ export default function ChatDrawer({
   }, [activeTab?.id, activeTab?.url, isMultiAgentMode]);
 
   // Single Agent Direct Automation with Live Streaming Event Stream
-  const executeSingleAgentAction = async (text, taskId, controller, intent, messageId) => {
+  const executeSingleAgentAction = async (text, taskId, controller, intent, messageId, conversationOptions = {}) => {
     try {
       let buffer = '';
-      let outcome = { status: 'completed', text: '', durationMs: null };
+      let outcome = { status: 'completed', text: '', durationMs: null, task_outcome: null };
 
       const processChunk = (chunkText) => {
         buffer += chunkText;
@@ -263,7 +264,8 @@ export default function ChatDrawer({
                   durationMs: data.durationMs || outcome.durationMs,
                   is_conversational: isConv,
                   fast_path: Boolean(!isFailed && (data.fast_path || outcome.fast_path)),
-                  adapter_name: isFailed ? null : (data.adapter_name || outcome.adapter_name)
+                  adapter_name: isFailed ? null : (data.adapter_name || outcome.adapter_name),
+                  task_outcome: isFailed ? null : (data.metadata?.task_outcome || data.task_outcome || outcome.task_outcome || null)
                 };
               }
 
@@ -350,6 +352,7 @@ export default function ChatDrawer({
                     is_conversational: isConv,
                     fast_path: outcome.fast_path,
                     adapter_name: outcome.adapter_name,
+                    task_outcome: outcome.task_outcome,
                     isStreaming: false
                   };
                 }
@@ -371,6 +374,9 @@ export default function ChatDrawer({
               taskId,
               tabId: 'active_tab',
               url: activeTab?.url || '',
+              conversation_id: conversationOptions?.conversation_id,
+              messages: conversationOptions?.messages,
+              task_context: conversationOptions?.task_context,
               ...(intent ? { intent } : {})
             },
             (chunk) => processChunk(chunk),
@@ -397,6 +403,9 @@ export default function ChatDrawer({
           taskId,
           tabId: 'active_tab',
           url: activeTab?.url || '',
+          conversation_id: conversationOptions?.conversation_id,
+          messages: conversationOptions?.messages,
+          task_context: conversationOptions?.task_context,
           ...(intent ? { intent } : {})
         })
       });
@@ -517,7 +526,31 @@ export default function ChatDrawer({
         const taskId = `task-${Date.now()}`;
         const controller = new AbortController();
         activeTaskRef.current = { taskId, controller, messageId };
-        const outcome = await executeSingleAgentAction(text, taskId, controller, intent, messageId);
+
+        const historyMessages = messages
+          .filter(m => (m.sender === 'user' || m.sender === 'assistant') && (m.text || m.content) && m.status !== 'working')
+          .slice(-10)
+          .map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: (m.text || m.content || '').slice(0, 2000),
+            task_outcome: m.task_outcome || null,
+          }));
+
+        let lastTaskContext = null;
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].task_outcome) {
+            lastTaskContext = messages[i].task_outcome;
+            break;
+          }
+        }
+
+        const convOptions = {
+          conversation_id: conversationId,
+          messages: historyMessages,
+          task_context: lastTaskContext,
+        };
+
+        const outcome = await executeSingleAgentAction(text, taskId, controller, intent, messageId, convOptions);
         const active = activeTaskRef.current;
         const terminalStatus = active?.stopping || outcome.status === 'stopped' ? 'stopped' : outcome.status;
         const isConv = Boolean(outcome.is_conversational);
@@ -540,6 +573,7 @@ export default function ChatDrawer({
           is_conversational: isConv,
           fast_path: isFastPath,
           adapter_name: outcome.adapter_name,
+          task_outcome: outcome.task_outcome,
           completed: true,
           isStreaming: false,
         } : message));
@@ -569,6 +603,7 @@ export default function ChatDrawer({
   };
 
   const handleClearChat = () => {
+    setConversationId('conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     setMessages([
       {
         id: 'm1',
