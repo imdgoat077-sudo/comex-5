@@ -1,0 +1,1301 @@
+{
+  "metadata": {
+    "task": "Amazon India Laptop Search & Evaluation",
+    "model": "ag/gemini-3.7-flash-medium",
+    "cdp_url": "http://127.0.0.1:9222",
+    "timestamp": "2026-09-18T20:36:02Z"
+  },
+  "runs": [
+    {
+      "condition": "A",
+      "condition_name": "Comex Nervous System ON",
+      "task_completion": "FAIL",
+      "total_wall_clock_time": 367.61,
+      "number_of_browser_actions": 70,
+      "number_of_clicks": 22,
+      "number_of_text_entries": 15,
+      "number_of_back_navigations": 7,
+      "number_of_scrolls": 1,
+      "number_of_page_navigations": 1,
+      "number_of_failed_actions": 0,
+      "number_of_stale_or_missing_targets": 0,
+      "number_of_retries": 0,
+      "recovery_turns": 0,
+      "number_of_llm_turns": 75,
+      "final_data_correctness": "INCOMPLETE / UNVERIFIED",
+      "failure_reason": "Max turns reached without calling finish; Only 2/5 valid products accepted",
+      "accepted_products": [
+        {
+          "asin": "B0DG2GCTD7",
+          "model": "Acer Aspire Lite AL15-41",
+          "price": "\u20b959,990",
+          "processor": "AMD Ryzen 5 5625U",
+          "ram": "16 GB",
+          "ssd": "512 GB",
+          "rating": "4.0 out of 5 stars",
+          "reviews": "922",
+          "timestamp": 60.73103395791259
+        },
+        {
+          "asin": "B0CP2KRYLM",
+          "model": "Lenovo IdeaPad Slim 1 82R400ERIN",
+          "price": "\u20b959,790",
+          "processor": "AMD Ryzen 5 5500U",
+          "ram": "16 GB",
+          "ssd": "512 GB",
+          "rating": "4.2 out of 5 stars",
+          "reviews": "535",
+          "timestamp": 173.49698358296882
+        }
+      ],
+      "rejected_products": [
+        {
+          "asin": "B0GW8JNM6J",
+          "model": "Acer Aspire One A114-45",
+          "reason": "Processor is Intel Celeron N4500 (not i5/Ultra 5/Ryzen 5/7), RAM is 12GB (<16GB), rating is 2.5 (<4.0), reviews 31 (<500).",
+          "timestamp": 43.4423719169572
+        },
+        {
+          "asin": "B09CMGFC1K",
+          "model": "ASUS TUF Gaming A15 FA506NCG-HN251WS",
+          "reason": "Price is \u20b984,990 (> \u20b980,000) and reviews are 54 (< 500).",
+          "timestamp": 90.86787183291744
+        },
+        {
+          "asin": "B0DCSYTVDD",
+          "model": "HP 255 G10",
+          "reason": "Processor is AMD Ryzen 3 7335U (constraint requires Intel Core i5/Ultra 5 or AMD Ryzen 5/Ryzen 7).",
+          "timestamp": 128.1148177079158
+        }
+      ],
+      "comparison_table": "",
+      "browser_click_calls": 22,
+      "allow_decisions": 22,
+      "route_to_known_handler_decisions": 0,
+      "report_blocked_decisions": 0,
+      "runtime_safety_aborts": 0,
+      "click_latencies_ms": [
+        103.61,
+        162.8,
+        160.13,
+        166.99,
+        165.1,
+        194.9,
+        203.24,
+        182.17,
+        143.85,
+        182.2,
+        214.5,
+        200.94,
+        208.47,
+        160.04,
+        189.94,
+        184.94,
+        318.99,
+        193.74,
+        208.71,
+        189.26,
+        207.82,
+        191.57
+      ],
+      "direct_harness_actions": 0,
+      "failed_target_lookups": 0,
+      "tool_trace": [
+        {
+          "action": "navigate",
+          "url": "https://www.amazon.in",
+          "timestamp": 2.204151999903843,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire Lite 16GB RAM",
+          "press_enter": true,
+          "timestamp": 10.352194957900792,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 21.419292083010077,
+          "status": "success",
+          "view": "home_page"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 23.907064332976006,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 102ms (decision: ALLOW).",
+          "duration_ms": 103.61,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 29.117307832930237,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0GW8JNM6J\"] a.a-text-normal",
+          "timestamp": 34.42641587497201,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0GW8JNM6J\"] a.a-text-normal' at (573.7, 313.0) in 161ms (decision: ALLOW).",
+          "duration_ms": 162.8,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 39.341974874958396,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 45.98007004195824,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 51.381923542008735,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0DG2GCTD7\"] a.a-text-normal",
+          "timestamp": 53.09453654196113,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0DG2GCTD7\"] a.a-text-normal' at (573.7, 330.2) in 159ms (decision: ALLOW).",
+          "duration_ms": 160.13,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 58.512963041896,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 63.11093195795547,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP 15s 16GB RAM i5",
+          "press_enter": true,
+          "timestamp": 68.11852487490978,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 74.5827710418962,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 165ms (decision: ALLOW).",
+          "duration_ms": 166.99,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 79.67994787497446,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B09CMGFC1K\"] a.a-text-normal",
+          "timestamp": 82.01085308298934,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B09CMGFC1K\"] a.a-text-normal' at (573.7, 329.8) in 164ms (decision: ALLOW).",
+          "duration_ms": 165.1,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 87.89306962490082,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 92.88770791690331,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP laptop 16GB RAM",
+          "press_enter": true,
+          "timestamp": 98.46466037491336,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 104.60439749993384,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 194ms (decision: ALLOW).",
+          "duration_ms": 194.9,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 109.674960208009,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0DCSYTVDD\"] a.a-text-normal",
+          "timestamp": 112.00006029196084,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0DCSYTVDD\"] a.a-text-normal' at (573.7, 329.9) in 202ms (decision: ALLOW).",
+          "duration_ms": 203.24,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 117.04480549995787,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 130.46039654198103,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Honor MagicBook 16GB",
+          "press_enter": true,
+          "timestamp": 136.04605770797934,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 142.47768158291,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 181ms (decision: ALLOW).",
+          "duration_ms": 182.17,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 147.63522479194216,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Lenovo IdeaPad 16GB RAM",
+          "press_enter": true,
+          "timestamp": 150.1887302919058,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 156.43281291692983,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 143ms (decision: ALLOW).",
+          "duration_ms": 143.85,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 161.72546416695695,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0CP2KRYLM\"] a.a-text-normal",
+          "timestamp": 165.37194779200945,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0CP2KRYLM\"] a.a-text-normal' at (573.7, 330.1) in 181ms (decision: ALLOW).",
+          "duration_ms": 182.2,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 170.31411695794668,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 175.96518108295277,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "ASUS Vivobook 15 16GB RAM i5",
+          "press_enter": true,
+          "timestamp": 187.95774724998046,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 194.41254841699265,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 213ms (decision: ALLOW).",
+          "duration_ms": 214.5,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 199.41729104192927,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "laptop 16GB RAM i5",
+          "press_enter": true,
+          "timestamp": 202.0594029999338,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 208.9116997079691,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 200ms (decision: ALLOW).",
+          "duration_ms": 200.94,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 214.4648401249433,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire 5 16GB",
+          "press_enter": true,
+          "timestamp": 218.1918759169057,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 224.0986307079438,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 207ms (decision: ALLOW).",
+          "duration_ms": 208.47,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 229.58915995794814,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Dell 15 laptop 16GB",
+          "press_enter": true,
+          "timestamp": 232.78688487492036,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 240.2858711249428,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 159ms (decision: ALLOW).",
+          "duration_ms": 160.04,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 245.04496529197786,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0GV1L119H\"] a.a-text-normal",
+          "timestamp": 247.26215979200788,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0GV1L119H\"] a.a-text-normal' at (573.7, 329.8) in 188ms (decision: ALLOW).",
+          "duration_ms": 189.94,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 254.3793169579003,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 256.7462541249115,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Dell Inspiron i5 16GB RAM",
+          "press_enter": true,
+          "timestamp": 262.31685287493747,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 268.51964358298574,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 183ms (decision: ALLOW).",
+          "duration_ms": 184.94,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 275.5510611250065,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP 15s Ryzen 5 16GB",
+          "press_enter": true,
+          "timestamp": 278.1594357499853,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 284.2167177499505,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 318ms (decision: ALLOW).",
+          "duration_ms": 318.99,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 289.25770650000777,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "laptop 16GB 512GB SSD",
+          "press_enter": true,
+          "timestamp": 291.6367738749832,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 297.9619829999283,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 193ms (decision: ALLOW).",
+          "duration_ms": 193.74,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 302.7585230419645,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0F29HNJL1\"] a.a-text-normal",
+          "timestamp": 306.61948824999854,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element 'div[data-asin=\"B0F29HNJL1\"] a.a-text-normal' at (573.7, 329.8) in 207ms (decision: ALLOW).",
+          "duration_ms": 208.71,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 311.67007270792965,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 314.07697879197076,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire Lite i5 16GB",
+          "press_enter": true,
+          "timestamp": 319.4020528330002,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 328.8465810419293,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (556.7, 30.0) in 188ms (decision: ALLOW).",
+          "duration_ms": 189.26,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 333.5070727079874,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "laptop 16GB RAM",
+          "press_enter": true,
+          "timestamp": 336.0481275829952,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 343.25978245795704,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 206ms (decision: ALLOW).",
+          "duration_ms": 207.82,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 348.19633904192597,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "scroll",
+          "delta_y": 800,
+          "timestamp": 350.20313262497075,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 356.06750141689554,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "ASUS Vivobook 16GB",
+          "press_enter": true,
+          "timestamp": 358.51532120793127,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 364.9147949999897,
+          "gate_decision": "ALLOW",
+          "rule_name": "AllRulesPassed",
+          "executed": true,
+          "result": "Successfully clicked element '#nav-search-submit-button' at (621.7, 30.0) in 189ms (decision: ALLOW).",
+          "duration_ms": 191.57,
+          "status": "success"
+        }
+      ]
+    },
+    {
+      "condition": "B",
+      "condition_name": "Comex Nervous System BYPASSED",
+      "task_completion": "FAIL",
+      "total_wall_clock_time": 324.37,
+      "number_of_browser_actions": 70,
+      "number_of_clicks": 20,
+      "number_of_text_entries": 16,
+      "number_of_back_navigations": 5,
+      "number_of_scrolls": 3,
+      "number_of_page_navigations": 1,
+      "number_of_failed_actions": 0,
+      "number_of_stale_or_missing_targets": 0,
+      "number_of_retries": 0,
+      "recovery_turns": 0,
+      "number_of_llm_turns": 75,
+      "final_data_correctness": "INCOMPLETE / UNVERIFIED",
+      "failure_reason": "Max turns reached without calling finish; Only 2/5 valid products accepted",
+      "accepted_products": [
+        {
+          "asin": "B0DG2GCTD7",
+          "model": "Acer Aspire Lite AL15-41",
+          "price": "\u20b959,990",
+          "processor": "AMD Ryzen 5 5625U",
+          "ram": "16 GB",
+          "ssd": "512 GB SSD",
+          "rating": "4.0",
+          "reviews": "922",
+          "timestamp": 57.51225449994672
+        },
+        {
+          "asin": "B0CP2KRYLM",
+          "model": "Lenovo IdeaPad Slim 1 82R400ERIN",
+          "price": "\u20b959,790",
+          "processor": "AMD Ryzen 5 5500U",
+          "ram": "16 GB",
+          "ssd": "512 GB SSD",
+          "rating": "4.2",
+          "reviews": "535",
+          "timestamp": 183.9098517909879
+        }
+      ],
+      "rejected_products": [
+        {
+          "asin": "B0GW8JNM6J",
+          "model": "Acer Smartchoice Aspire One A114-45",
+          "reason": "Processor is Celeron N4500 (not i5/Ultra 5/Ryzen 5/7), RAM is 12GB (<16GB), Rating is 2.5 (<4.0), Reviews are 31 (<500)",
+          "timestamp": 42.071891249972396
+        },
+        {
+          "asin": "B09CMGFC1K",
+          "model": "ASUS TUF Gaming A15 FA506NCG-HN251WS",
+          "reason": "Price is \u20b984,990 (> \u20b980,000) and review count is 54 (< 500)",
+          "timestamp": 84.11514812498353
+        },
+        {
+          "asin": "B0GV1L119H",
+          "model": "Dell 15 DC15250",
+          "reason": "Processor is Intel Core 3 100U (not i5/Ultra 5/Ryzen 5/7)",
+          "timestamp": 211.83957370801363
+        }
+      ],
+      "comparison_table": "",
+      "browser_click_calls": 0,
+      "allow_decisions": 0,
+      "route_to_known_handler_decisions": 0,
+      "report_blocked_decisions": 0,
+      "runtime_safety_aborts": 0,
+      "click_latencies_ms": [],
+      "direct_harness_actions": 20,
+      "failed_target_lookups": 0,
+      "tool_trace": [
+        {
+          "action": "navigate",
+          "url": "https://www.amazon.in",
+          "timestamp": 2.9692357500316575,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire Lite 16GB RAM",
+          "press_enter": true,
+          "timestamp": 9.810355999972671,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 17.812500540982,
+          "status": "success",
+          "view": "home_page"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 20.67609237495344,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 24.656772332964465,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0GW8JNM6J\"] a.a-text-normal",
+          "timestamp": 27.019677832955495,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 373.328125,
+            "y": 277,
+            "width": 530.6640625,
+            "height": 72
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 31.238833124982193,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 43.86993404093664,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 49.04214587493334,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0DG2GCTD7\"] a.a-text-normal",
+          "timestamp": 50.889402249944396,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 373.328125,
+            "y": 3072.1953125,
+            "width": 530.6640625,
+            "height": 72
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 55.32733670796733,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 59.39538316603284,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP 15s 16GB RAM i5",
+          "press_enter": true,
+          "timestamp": 64.64582670794334,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 70.23295350000262,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 74.65959212498274,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B09CMGFC1K\"] a.a-text-normal",
+          "timestamp": 76.68260812503286,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 373.328125,
+            "y": 2010.78125,
+            "width": 530.6640625,
+            "height": 72
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 81.60966858302709,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 86.16086679103319,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "ASUS Vivobook 15 16GB RAM",
+          "press_enter": true,
+          "timestamp": 91.23897758300882,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 96.94636512501165,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 101.88675008295104,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "scroll",
+          "delta_y": 800,
+          "timestamp": 104.09927637502551,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 107.53623387496918,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "laptop 16gb ram i5 ssd",
+          "press_enter": true,
+          "timestamp": 109.77869191602804,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 115.56124033301603,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 120.01099949993659,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Honor MagicBook 16GB",
+          "press_enter": true,
+          "timestamp": 122.06684074993245,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 128.09322895796504,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 132.48014295799658,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Lenovo IdeaPad 3 16GB RAM",
+          "press_enter": true,
+          "timestamp": 134.8313337910222,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 140.88650145800784,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 145.7923177080229,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire 16GB RAM",
+          "press_enter": true,
+          "timestamp": 147.89194733300246,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 153.66826379101258,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 161.0492269579554,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "bestseller laptop 16gb",
+          "press_enter": true,
+          "timestamp": 163.5432737499941,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 169.2359772910131,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 173.71735304093454,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0CP2KRYLM\"] a.a-text-normal",
+          "timestamp": 175.76016325003002,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 373.328125,
+            "y": 3383.4453125,
+            "width": 530.6640625,
+            "height": 72
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 181.16529162495863,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 185.74993870803155,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Dell 15 Intel Core i5 16GB RAM 512GB SSD",
+          "press_enter": true,
+          "timestamp": 190.839569499949,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 197.44298841594718,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 202.43065629096236,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "click",
+          "selector": "div[data-asin=\"B0GV1L119H\"] a.a-text-normal",
+          "timestamp": 204.38914129103068,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 373.328125,
+            "y": 609,
+            "width": 530.6640625,
+            "height": 72
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 209.0512990829302,
+          "status": "success",
+          "view": "product_page"
+        },
+        {
+          "action": "go_back",
+          "timestamp": 214.38810858293436,
+          "status": "success"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Lenovo IdeaPad Gaming 3 16GB",
+          "press_enter": true,
+          "timestamp": 222.41381933295634,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 228.84055700001772,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 233.3885386659531,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "ASUS TUF Gaming 16GB",
+          "press_enter": true,
+          "timestamp": 236.57156666601077,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 242.4810873749666,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 248.42412729095668,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "Acer Aspire 5 16GB",
+          "press_enter": true,
+          "timestamp": 250.66668345802464,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 256.8192064999603,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 261.8005374999484,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "scroll",
+          "delta_y": 600,
+          "timestamp": 264.27991662500426,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 268.470613625017,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP Pavilion 15 16GB",
+          "press_enter": true,
+          "timestamp": 270.4434732910013,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 277.2262764159823,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 281.77846795797814,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "HP 15s Ryzen 5 16GB",
+          "press_enter": true,
+          "timestamp": 284.26921862503514,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 291.30335750000086,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 296.4720676660072,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "laptop 16GB RAM",
+          "press_enter": true,
+          "timestamp": 299.1834186660126,
+          "status": "success"
+        },
+        {
+          "action": "click",
+          "selector": "#nav-search-submit-button",
+          "timestamp": 305.1595236249268,
+          "status": "dispatched_legacy",
+          "rect": {
+            "x": 599.15625,
+            "y": 10,
+            "width": 45,
+            "height": 40
+          }
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 309.7324806249235,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "scroll",
+          "delta_y": 800,
+          "timestamp": 311.7076351660071,
+          "status": "success"
+        },
+        {
+          "action": "get_page_content",
+          "timestamp": 318.36099816602655,
+          "status": "success",
+          "view": "search_results"
+        },
+        {
+          "action": "type_text",
+          "selector": "#twotabsearchtextbox",
+          "text": "ASUS TUF Gaming F15",
+          "press_enter": true,
+          "timestamp": 320.53926912497263,
+          "status": "success"
+        }
+      ]
+    }
+  ]
+}

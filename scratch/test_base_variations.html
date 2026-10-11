@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  h1 { font-size: 20px; margin-bottom: 8px; font-weight: 700; color: #38bdf8; }
+  p.subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card h2 { font-size: 13px; margin: 0; color: #f1f5f9; font-weight: 600; }
+  .card .desc { font-size: 11px; color: #94a3b8; margin: 0; }
+  .preview-row {
+    display: flex;
+    gap: 10px;
+  }
+  .canvas {
+    flex: 1;
+    height: 140px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .canvas.light {
+    background: #ffffff;
+    background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .canvas.dark {
+    background: #18181b;
+    background-image: radial-gradient(#3f3f46 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .btn-sample {
+    position: absolute;
+    left: 20px;
+    top: 45px;
+    padding: 6px 14px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .cursor-pos {
+    position: absolute;
+    left: 50px;
+    top: 55px;
+  }
+  .zoom-box {
+    background: #090d16;
+    border-radius: 8px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #334155;
+  }
+  .zoom-box svg {
+    transform: scale(2.2);
+  }
+</style>
+</head>
+<body>
+  <h1>Base Thinness & Geometry Explorations</h1>
+  <p.subtitle>Comparing different base widths and base styles to find the exact "thinner triangle base" balance.</p>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    // Define variations with strict symmetry (y = x)
+    // Symmetry rule: if a point is (x, y), its mirror is (y, x)
+    // If control point 1 is (x1, y1), its mirror is (y1, x1)
+    const variations = [
+      {
+        id: 'current',
+        title: '0. Current Base (Wide: 29px span)',
+        desc: 'Wide flared base (61° opening angle). Base width is 119% of length.',
+        stroke: 4.8,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        path: `M 0.5 0.5 
+               L 7.5 28 
+               C 8.2 29.6 10 30 11.5 29 
+               L 17 17 
+               L 29 11.5 
+               C 30 10 29.6 8.2 28 7.5 
+               Z`
+      },
+      {
+        id: 'narrow_base_notch',
+        title: '1. Slim Base Notch (20px span)',
+        desc: 'Base narrowed by 30%. Sleek arrowhead with balanced notch (18, 18).',
+        stroke: 4.6,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (10.5, 27) and (27, 10.5) -> dx = 16.5, dy = -16.5 -> span = 23.3px
+        // Notch at (18, 18)
+        path: `M 0.5 0.5 
+               L 10.5 27 
+               C 11.3 28.5 13 28.7 14.5 27.5 
+               L 18 18 
+               L 27.5 14.5 
+               C 28.7 13 28.5 11.3 27 10.5 
+               Z`
+      },
+      {
+        id: 'thinner_base_notch',
+        title: '2. Thinner Base Notch (17px span)',
+        desc: 'Base narrowed by ~40%. Slender aerodynamic delta, crisp & elegant.',
+        stroke: 4.4,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (12.5, 26) and (26, 12.5) -> dx = 13.5, dy = -13.5 -> span = 19px
+        // Notch at (18.5, 18.5)
+        path: `M 0.5 0.5 
+               L 12 26 
+               C 12.8 27.4 14.4 27.6 15.8 26.5 
+               L 18.5 18.5 
+               L 26.5 15.8 
+               C 27.6 14.4 27.4 12.8 26 12 
+               Z`
+      },
+      {
+        id: 'slender_dart',
+        title: '3. Ultra-Slim Base Notch (14px span)',
+        desc: 'Sharp, needle-sleek dart. Very narrow triangle base (14, 25.5).',
+        stroke: 4.2,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (13.5, 25.5) and (25.5, 13.5) -> span = 17px
+        // Notch at (19, 19)
+        path: `M 0.5 0.5 
+               L 13.5 25.5 
+               C 14.2 26.8 15.8 27 17 25.8 
+               L 19 19 
+               L 25.8 17 
+               C 27 15.8 26.8 14.2 25.5 13.5 
+               Z`
+      },
+      {
+        id: 'shallow_curve_base',
+        title: '4. Thinner Base + Gentle Inward Arc',
+        desc: 'Instead of sharp notch, base has a subtle concave arc. Pure triangle feel.',
+        stroke: 4.4,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (11.5, 26.5) and (26.5, 11.5).
+        // Arc goes through (18.5, 18.5) via quadratic bezier Q 17.5 17.5 26.5 11.5
+        path: `M 0.5 0.5 
+               L 11.5 26.5 
+               C 12.5 28 14.5 28 15.8 26.8 
+               Q 17.5 17.5 26.8 15.8 
+               C 28 14.5 28 12.5 26.5 11.5 
+               Z`
+      },
+      {
+        id: 'flat_rounded_base',
+        title: '5. Pure Triangle with Straight Base',
+        desc: 'No notch at all! A pure sleek triangle with rounded base corners.',
+        stroke: 4.4,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (11, 26) and (26, 11) with rounded corners
+        path: `M 0.5 0.5 
+               L 10.5 25.5 
+               C 11.5 27.5 13.5 27.5 15 26 
+               L 26 15 
+               C 27.5 13.5 27.5 11.5 25.5 10.5 
+               Z`
+      },
+      {
+        id: 'moderate_slim_triangle',
+        title: '6. Refined Triangle Base (Sweet Spot)',
+        desc: 'Balanced base width (~21px span) with smooth rounded bottom corners.',
+        stroke: 4.5,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        // Base corners: (9.5, 27) and (27, 9.5). Moderate notch at (17.5, 17.5)
+        path: `M 0.5 0.5 
+               L 9.5 27 
+               C 10.3 28.5 12.2 28.8 13.6 27.6 
+               L 17.5 17.5 
+               L 27.6 13.6 
+               C 28.8 12.2 28.5 10.3 27 9.5 
+               Z`
+      },
+      {
+        id: 'narrow_sleek_notch',
+        title: '7. Sleek Narrow Triangle (Crisp Notch)',
+        desc: 'Tight triangle base (11, 26) with crisp modern indentation.',
+        stroke: 4.4,
+        viewBox: '-1.2 -1.2 35 35',
+        size: 35,
+        path: `M 0.5 0.5 
+               L 11 26.5 
+               C 11.8 28 13.5 28.2 14.8 27 
+               L 18 18 
+               L 27 14.8 
+               C 28.2 13.5 28 11.8 26.5 11 
+               Z`
+      }
+    ];
+
+    const grid = document.getElementById('grid');
+    variations.forEach(v => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      
+      const svgCode = `
+        <svg style="width: ${v.size}px; height: ${v.size}px; overflow: visible; filter: drop-shadow(0 3.5px 8px rgba(0,0,0,0.42)) drop-shadow(0 1px 3px rgba(0,0,0,0.25));" viewBox="${v.viewBox}" fill="none">
+          <path d="${v.path}"
+                fill="#000000"
+                stroke="#ffffff"
+                stroke-width="${v.stroke}"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                style="paint-order: stroke fill;"/>
+        </svg>
+      `;
+
+      card.innerHTML = `
+        <h2>${v.title}</h2>
+        <p class="desc">${v.desc}</p>
+        <div class="preview-row">
+          <div class="canvas light">
+            <div class="btn-sample">Button</div>
+            <div class="cursor-pos">${svgCode}</div>
+          </div>
+          <div class="canvas dark">
+            <div class="btn-sample" style="background:#0ea5e9;">Button</div>
+            <div class="cursor-pos">${svgCode}</div>
+          </div>
+        </div>
+        <div class="zoom-box">
+          ${svgCode}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

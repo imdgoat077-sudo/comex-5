@@ -3,7 +3,7 @@ DDL definitions and migration runner for the Comex Agent Graph Memory.
 Uses Kuzu's Cypher-like DDL.
 """
 
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 
 NODE_TABLES = [
     """
@@ -74,6 +74,9 @@ NODE_TABLES = [
         content STRING,
         created_at TIMESTAMP,
         source_agent_id STRING,
+        source_url STRING,
+        source_run_id STRING,
+        source_task_id STRING,
         PRIMARY KEY(id)
     )
     """,
@@ -136,6 +139,48 @@ NODE_TABLES = [
         PRIMARY KEY(key)
     )
     """,
+    """
+    CREATE NODE TABLE IF NOT EXISTS SiteAdapter(
+        id STRING,
+        name STRING,
+        domain STRING,
+        action_intent STRING,
+        code_template STRING,
+        parameter_schema STRING,
+        dom_fingerprint STRING,
+        success_count INT64,
+        failure_count INT64,
+        last_success_at TIMESTAMP,
+        status STRING,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP,
+        PRIMARY KEY(id)
+    )
+    """,
+    """
+    CREATE NODE TABLE IF NOT EXISTS DOMFingerprint(
+        id STRING,
+        domain STRING,
+        url_pattern STRING,
+        structural_hash STRING,
+        primary_selectors STRING,
+        created_at TIMESTAMP,
+        PRIMARY KEY(id)
+    )
+    """,
+    """
+    CREATE NODE TABLE IF NOT EXISTS AntiPattern(
+        id STRING,
+        domain STRING,
+        failed_selector STRING,
+        trap_type STRING,
+        mitigation_hint STRING,
+        occurrence_count INT64,
+        last_seen_at TIMESTAMP,
+        created_at TIMESTAMP,
+        PRIMARY KEY(id)
+    )
+    """,
 ]
 
 REL_TABLES = [
@@ -151,7 +196,21 @@ REL_TABLES = [
     "CREATE REL TABLE IF NOT EXISTS REFLECTED_ON(FROM Reflection TO Agent)",
     "CREATE REL TABLE IF NOT EXISTS DISTILLED_FROM(FROM Skill TO Agent)",
     "CREATE REL TABLE IF NOT EXISTS LEARNED_FROM(FROM UserMemory TO Agent)",
+    "CREATE REL TABLE IF NOT EXISTS COMPILED_FROM(FROM SiteAdapter TO Episode)",
+    "CREATE REL TABLE IF NOT EXISTS MATCHES_DOM(FROM SiteAdapter TO DOMFingerprint)",
+    "CREATE REL TABLE IF NOT EXISTS HAS_ANTIPATTERN(FROM Page TO AntiPattern)",
 ]
+
+
+def _safe_add_column(conn, table: str, col: str, col_type: str, default_val: str = "''") -> None:
+    """Safely adds a column to an existing table, ignoring only already-existing property errors."""
+    try:
+        conn.execute(f"ALTER TABLE {table} ADD {col} {col_type} DEFAULT {default_val}")
+    except RuntimeError as re:
+        err_msg = str(re).lower()
+        if "already has property" in err_msg or "already exists" in err_msg:
+            return
+        raise
 
 
 def run_migrations(conn) -> None:
@@ -160,6 +219,11 @@ def run_migrations(conn) -> None:
         conn.execute(ddl)
     for ddl in REL_TABLES:
         conn.execute(ddl)
+
+    # Safe additive column migrations for existing databases
+    _safe_add_column(conn, "Artifact", "source_url", "STRING", "''")
+    _safe_add_column(conn, "Artifact", "source_run_id", "STRING", "''")
+    _safe_add_column(conn, "Artifact", "source_task_id", "STRING", "''")
 
     # Upsert schema version
     conn.execute(
@@ -177,7 +241,9 @@ def run_migrations(conn) -> None:
         ("Artifact", "Artifact_FTS", "['title', 'content', 'artifact_type']"),
         ("UserMemory", "UserMemory_FTS", "['category', 'key', 'value']"),
         ("Skill", "Skill_FTS", "['name', 'domain', 'description', 'code_snippet']"),
-        ("Reflection", "Reflection_FTS", "['novelty_reason', 'critique', 'lesson_learned']")
+        ("Reflection", "Reflection_FTS", "['novelty_reason', 'critique', 'lesson_learned']"),
+        ("SiteAdapter", "SiteAdapter_FTS", "['name', 'domain', 'action_intent', 'code_template']"),
+        ("AntiPattern", "AntiPattern_FTS", "['domain', 'failed_selector', 'trap_type', 'mitigation_hint']")
     ]
     for table_name, index_name, properties in fts_indices:
         try:

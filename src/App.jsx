@@ -327,17 +327,27 @@ export default function App() {
       try {
         window.nexusNative.tabs.createHiddenAgentTab(hiddenTabId, 'https://example.com');
 
-        const response = await fetch('http://127.0.0.1:8000/agent/run', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        let data;
+        if (window.nexusNative?.agent?.run) {
+          data = await window.nexusNative.agent.run({
             task: 'Open https://example.com, read the page title and the main heading, and return both exactly as: Page Title: <title>\\nMain Heading: <heading>. Do not interact with any visible tab.',
             tabId: hiddenTabId,
-            url: 'https://example.com'
-          })
-        });
-
-        const data = await response.json();
+            url: 'https://example.com',
+            taskId: `task_${Date.now()}`,
+          });
+        } else {
+          const response = await fetch('http://127.0.0.1:8000/agent/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              task: 'Open https://example.com, read the page title and the main heading, and return both exactly as: Page Title: <title>\\nMain Heading: <heading>. Do not interact with any visible tab.',
+              tabId: hiddenTabId,
+              url: 'https://example.com',
+              taskId: `task_${Date.now()}`,
+            })
+          });
+          data = await response.json();
+        }
         const resultText = data.success ? data.result : data.error || 'Hidden-tab task failed.';
 
         setLandingHistory((prev) => prev.map((item, index) => index === 0 ? {

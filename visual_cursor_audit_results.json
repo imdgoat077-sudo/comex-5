@@ -1,0 +1,423 @@
+{
+  "timestamp": 1789797883.7152882,
+  "target_tab": "https://orteil.dashnet.org/cookieclicker/",
+  "monitored_pids": {
+    "main_pid": 37758,
+    "python_pid": 38685,
+    "renderer_pids": [
+      37759,
+      37760,
+      37761,
+      37762,
+      38060,
+      38314,
+      38945,
+      38947,
+      38983,
+      38984,
+      38986,
+      39002
+    ],
+    "all_pids": [
+      37758,
+      38685,
+      37759,
+      37760,
+      37761,
+      37762,
+      38060,
+      38314,
+      38945,
+      38947,
+      38983,
+      38984,
+      38986,
+      39002
+    ]
+  },
+  "test_1_click_latency": {
+    "off": {
+      "count": 60,
+      "t1_t2_ms": {
+        "mean": 1.155,
+        "median": 0.905,
+        "p95": 2.002,
+        "p99": 5.099
+      },
+      "t2_t3_ms": {
+        "mean": 1.359,
+        "median": 1.108,
+        "p95": 2.614,
+        "p99": 3.751
+      },
+      "real_action_duration_ms": {
+        "mean": 2.514,
+        "median": 2.129,
+        "p95": 4.609,
+        "p99": 7.819
+      },
+      "t3_t4_hook_overhead_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0
+      }
+    },
+    "on": {
+      "count": 60,
+      "t1_t2_ms": {
+        "mean": 3.248,
+        "median": 2.352,
+        "p95": 7.09,
+        "p99": 12.645
+      },
+      "t2_t3_ms": {
+        "mean": 2.497,
+        "median": 1.86,
+        "p95": 6.255,
+        "p99": 8.95
+      },
+      "real_action_duration_ms": {
+        "mean": 5.745,
+        "median": 4.221,
+        "p95": 12.471,
+        "p99": 18.527
+      },
+      "t3_t4_hook_overhead_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "p95": 0.0
+      }
+    },
+    "diff_real_mean_ms": 3.231,
+    "diff_real_pct": 128.52
+  },
+  "test_2_end_to_end_tasks": {
+    "runs_per_condition": 30,
+    "actions_per_run": 25,
+    "total_actions_evaluated": 1500,
+    "off_task_duration_ms": {
+      "mean": 2346.69,
+      "median": 2340.98,
+      "p95": 2427.32,
+      "p99": 2538.37,
+      "min": 2260.09,
+      "max": 2581.29
+    },
+    "on_task_duration_ms": {
+      "mean": 2249.26,
+      "median": 2245.65,
+      "p95": 2337.2,
+      "p99": 2384.83,
+      "min": 2089.54,
+      "max": 2401.54
+    },
+    "task_duration_delta": {
+      "absolute_diff_ms": -97.43,
+      "percentage_diff_pct": -4.15
+    },
+    "off_action_latency_ms": {
+      "mean": 94.76,
+      "median": 101.82,
+      "p95": 110.02,
+      "p99": 130.97
+    },
+    "on_action_latency_ms": {
+      "mean": 90.74,
+      "median": 96.76,
+      "p95": 106.8,
+      "p99": 117.79
+    }
+  },
+  "test_3_cpu_profiling": {
+    "OFF": {
+      "idle": {
+        "mean_cpu": 5.33,
+        "peak_cpu": 39.3,
+        "p95_cpu": 39.2,
+        "baseline_rss": 715.53,
+        "peak_rss": 715.53,
+        "final_rss": 700.88,
+        "sample_count": 36
+      },
+      "single_click": {
+        "mean_cpu": 0.93,
+        "peak_cpu": 3.5,
+        "p95_cpu": 3.5,
+        "baseline_rss": 702.03,
+        "peak_rss": 705.42,
+        "final_rss": 704.55,
+        "sample_count": 19
+      },
+      "continuous_clicks": {
+        "mean_cpu": 1.83,
+        "peak_cpu": 2.8,
+        "p95_cpu": 2.6,
+        "baseline_rss": 704.56,
+        "peak_rss": 704.59,
+        "final_rss": 703.73,
+        "sample_count": 52
+      },
+      "rapid_clicks": {
+        "mean_cpu": 6.72,
+        "peak_cpu": 35.4,
+        "p95_cpu": 23.1,
+        "baseline_rss": 703.73,
+        "peak_rss": 704.05,
+        "final_rss": 684.94,
+        "sample_count": 108
+      }
+    },
+    "ON": {
+      "idle": {
+        "mean_cpu": 4.11,
+        "peak_cpu": 22.8,
+        "p95_cpu": 14.6,
+        "baseline_rss": 684.94,
+        "peak_rss": 685.97,
+        "final_rss": 676.64,
+        "sample_count": 39
+      },
+      "single_click": {
+        "mean_cpu": 2.91,
+        "peak_cpu": 4.0,
+        "p95_cpu": 4.0,
+        "baseline_rss": 676.66,
+        "peak_rss": 677.7,
+        "final_rss": 677.22,
+        "sample_count": 20
+      },
+      "continuous_clicks": {
+        "mean_cpu": 2.9,
+        "peak_cpu": 4.1,
+        "p95_cpu": 3.9,
+        "baseline_rss": 677.25,
+        "peak_rss": 677.38,
+        "final_rss": 677.02,
+        "sample_count": 57
+      },
+      "rapid_clicks": {
+        "mean_cpu": 5.05,
+        "peak_cpu": 8.2,
+        "p95_cpu": 6.7,
+        "baseline_rss": 677.09,
+        "peak_rss": 687.91,
+        "final_rss": 675.81,
+        "sample_count": 115
+      }
+    }
+  },
+  "test_4_memory_and_leaks": {
+    "baseline": {
+      "rss_mb": 685.02,
+      "ripples": 0,
+      "dom_nodes": 37,
+      "js_heap_mb": 3.239
+    },
+    "after_100_clicks": {
+      "rss_mb": 677.55,
+      "rss_growth_from_base_mb": -7.47,
+      "ripples": 0,
+      "dom_nodes": 37,
+      "js_heap_mb": 3.305
+    },
+    "after_500_clicks": {
+      "rss_mb": 685.28,
+      "rss_growth_from_base_mb": 0.26,
+      "ripples": 0,
+      "dom_nodes": 37,
+      "js_heap_mb": 2.771
+    },
+    "after_1000_clicks": {
+      "rss_mb": 693.83,
+      "rss_growth_from_base_mb": 8.81,
+      "ripples": 0,
+      "dom_nodes": 37,
+      "js_heap_mb": 3.086
+    }
+  },
+  "test_5_async_pressure": {
+    "burst_10": {
+      "burst_size": 10,
+      "duration_seconds": 0.021,
+      "peak_pending_tasks": 6,
+      "mean_pending_tasks": 5.4,
+      "final_pending_tasks": 4,
+      "real_action_latency_ms": {
+        "mean": 2.058,
+        "median": 1.757,
+        "p95": 3.43,
+        "max": 3.617
+      }
+    },
+    "burst_50": {
+      "burst_size": 50,
+      "duration_seconds": 0.091,
+      "peak_pending_tasks": 6,
+      "mean_pending_tasks": 5.1,
+      "final_pending_tasks": 4,
+      "real_action_latency_ms": {
+        "mean": 1.801,
+        "median": 1.639,
+        "p95": 2.583,
+        "max": 6.097
+      }
+    },
+    "burst_100": {
+      "burst_size": 100,
+      "duration_seconds": 0.213,
+      "peak_pending_tasks": 6,
+      "mean_pending_tasks": 5.2,
+      "final_pending_tasks": 4,
+      "real_action_latency_ms": {
+        "mean": 2.121,
+        "median": 1.514,
+        "p95": 3.043,
+        "max": 28.859
+      }
+    },
+    "burst_500": {
+      "burst_size": 500,
+      "duration_seconds": 0.928,
+      "peak_pending_tasks": 6,
+      "mean_pending_tasks": 5.2,
+      "final_pending_tasks": 4,
+      "real_action_latency_ms": {
+        "mean": 1.84,
+        "median": 1.604,
+        "p95": 2.67,
+        "max": 31.154
+      }
+    },
+    "burst_1000": {
+      "burst_size": 1000,
+      "duration_seconds": 2.006,
+      "peak_pending_tasks": 6,
+      "mean_pending_tasks": 5.2,
+      "final_pending_tasks": 4,
+      "real_action_latency_ms": {
+        "mean": 1.99,
+        "median": 1.711,
+        "p95": 3.0,
+        "max": 30.095
+      }
+    },
+    "dom_verified_clicks": 1660,
+    "clicks_dropped": 0
+  },
+  "test_6_frame_timing": {
+    "idle": {
+      "sample_count": 0,
+      "fps": 0.0,
+      "mean_frame_ms": 0.0,
+      "jank_frames": 0,
+      "note": "rAF cleanly paused when not animating (0% CPU)"
+    },
+    "single_click": {
+      "sample_count": 90,
+      "fps": 60.0,
+      "mean_frame_ms": 16.68,
+      "jank_frames": 0,
+      "jank_pct": 0.0
+    },
+    "10_rapid_clicks": {
+      "sample_count": 249,
+      "fps": 60.0,
+      "mean_frame_ms": 16.67,
+      "jank_frames": 0,
+      "jank_pct": 0.0
+    },
+    "50_rapid_clicks": {
+      "sample_count": 512,
+      "fps": 60.0,
+      "mean_frame_ms": 16.67,
+      "jank_frames": 0,
+      "jank_pct": 0.0
+    }
+  },
+  "test_7_isolation_test": {
+    "A_OFF": {
+      "mean_ms": 4.589,
+      "median_ms": 4.521,
+      "p95_ms": 8.272,
+      "p99_ms": 9.782
+    },
+    "B_HOOK_ONLY": {
+      "mean_ms": 5.384,
+      "median_ms": 5.032,
+      "p95_ms": 7.882,
+      "p99_ms": 8.933
+    },
+    "C_TRANSPORT_ONLY": {
+      "mean_ms": 2.61,
+      "median_ms": 1.808,
+      "p95_ms": 3.839,
+      "p99_ms": 17.999
+    },
+    "D_ANIMATION_ONLY": {
+      "mean_ms": 2.379,
+      "median_ms": 1.89,
+      "p95_ms": 2.73,
+      "p99_ms": 12.681
+    },
+    "E_FULL": {
+      "mean_ms": 2.42,
+      "median_ms": 1.803,
+      "p95_ms": 2.7,
+      "p99_ms": 14.869
+    },
+    "layer_attribution_ms": {
+      "executor_hook_cost_ms": 0.795,
+      "transport_ipc_cost_ms": -2.774,
+      "glide_animation_cost_ms": -0.231,
+      "ripple_dom_cost_ms": 0.041,
+      "total_overhead_ms": -2.169
+    }
+  },
+  "test_8_multi_page": {
+    "Static Clean Page": {
+      "page": "Static Clean Page",
+      "off": {
+        "mean_ms": 4.538,
+        "median_ms": 4.957,
+        "p95_ms": 7.787
+      },
+      "on": {
+        "mean_ms": 2.458,
+        "median_ms": 1.754,
+        "p95_ms": 7.176
+      },
+      "delta_ms": -2.08,
+      "delta_pct": -45.83
+    },
+    "Dynamic Churning Page": {
+      "page": "Dynamic Churning Page",
+      "off": {
+        "mean_ms": 3.81,
+        "median_ms": 3.974,
+        "p95_ms": 7.291
+      },
+      "on": {
+        "mean_ms": 2.057,
+        "median_ms": 1.568,
+        "p95_ms": 3.246
+      },
+      "delta_ms": -1.753,
+      "delta_pct": -46.01
+    },
+    "Heavy 5k Animated DOM": {
+      "page": "Heavy 5k Animated DOM",
+      "off": {
+        "mean_ms": 3.507,
+        "median_ms": 1.315,
+        "p95_ms": 1.85
+      },
+      "on": {
+        "mean_ms": 4.356,
+        "median_ms": 2.203,
+        "p95_ms": 10.174
+      },
+      "delta_ms": 0.849,
+      "delta_pct": 24.2
+    }
+  }
+}

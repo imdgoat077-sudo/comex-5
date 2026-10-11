@@ -1,14 +1,81 @@
 import { app, BrowserWindow, shell, WebContentsView, ipcMain } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Securely load .env into process.env if COMEX_INTERNAL_APP_TOKEN is not already set
+function loadEnvFile() {
+  if (process.env.COMEX_INTERNAL_APP_TOKEN) return;
+  try {
+    const envPath = path.join(__dirname, '../.env');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[SECURITY] Could not read .env file in main process:', err.message);
+  }
+}
+loadEnvFile();
+
+const internalAppToken = process.env.COMEX_INTERNAL_APP_TOKEN || null;
+if (!internalAppToken) {
+  console.warn('[SECURITY] COMEX_INTERNAL_APP_TOKEN is not configured! Main-process proxy will fail closed.');
+}
+
+function isAuthorizedSender(event) {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  if (!event || !event.senderFrame || event.senderFrame !== mainWindow.webContents.mainFrame) {
+    console.warn('[SECURITY] Privileged IPC invocation rejected: unauthorized sender frame');
+    return false;
+  }
+  return true;
+}
+
+function isSafeNavigationUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return false;
+  const url = rawUrl.trim();
+  if (url === 'comex://launchpad' || url === 'nexus://launchpad' || url === 'about:blank') return true;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const port = parsed.port ? parseInt(parsed.port, 10) : (parsed.protocol === 'https:' ? 443 : 80);
+    if ([9222, 8000, 20128].includes(port)) {
+      console.warn(`[SECURITY] Blocked navigation attempt to internal sensitive port ${port}: ${url}`);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Enable Chrome DevTools Protocol so Playwright can attach to this browser.
 app.commandLine.appendSwitch('remote-debugging-port', '9222');
 
 let mainWindow;
+const isVisualCursorEnabled = process.env.VISUAL_CURSOR_ENABLED !== 'false';
+let cursorWindow = null;
+
+function resetVisualCursor() {
+  if (cursorWindow && !cursorWindow.isDestroyed()) {
+    cursorWindow.webContents.send('cursor-reset');
+  }
+}
 const views = new Map(); // tabId -> WebContentsView
 const hiddenAgentViews = new Map(); // POC-only hidden browser-use views
 let activeTabId = null;
@@ -101,6 +168,7 @@ function syncActiveView() {
 
   // If no view should be shown (internal URL or no active tab), we're done
   if (!shouldShowView) {
+    resetVisualCursor();
     console.log('[SYNC] No view to show. All views detached. React UI fully visible.');
     return;
   }
@@ -129,11 +197,14 @@ function syncActiveView() {
   const maxWidth = Math.max(0, winBounds.width - clampedX);
   const maxHeight = Math.max(0, winBounds.height - clampedY);
 
+  const widthToUse = currentBounds.width > 0 ? currentBounds.width : maxWidth;
+  const heightToUse = currentBounds.height > 0 ? currentBounds.height : maxHeight;
+
   const finalBounds = {
     x: clampedX,
     y: clampedY,
-    width: Math.min(Math.max(0, Math.round(currentBounds.width || 0)), maxWidth),
-    height: Math.min(Math.max(0, Math.round(currentBounds.height || 0)), maxHeight),
+    width: Math.min(Math.max(0, Math.round(widthToUse)), maxWidth),
+    height: Math.min(Math.max(0, Math.round(heightToUse)), maxHeight),
   };
 
   console.log('[SYNC] Setting clamped view bounds:', JSON.stringify(finalBounds));
@@ -143,6 +214,12 @@ function syncActiveView() {
   if (typeof view.setVisible === 'function') {
     view.setVisible(true);
     console.log('[SYNC] Set view visible');
+  }
+
+  // Ensure active view receives focus
+  if (view.webContents && typeof view.webContents.focus === 'function') {
+    view.webContents.focus();
+    console.log('[SYNC] Focused active view');
   }
 
   console.log('[SYNC] syncActiveView completed');
@@ -165,6 +242,14 @@ function attachTabListeners(tabId, view) {
       title: normalizeTitle(url, webContents.getTitle()),
       ...getNavState(webContents),
     });
+
+    if (!activeTabId && views.has(tabId)) {
+      activeTabId = tabId;
+    }
+    if (tabId === activeTabId && url !== 'comex://launchpad') {
+      currentBounds.isHidden = false;
+      syncActiveView();
+    }
   });
 
   webContents.on('did-fail-load', (_event, _code, _desc, _url, isMainFrame) => {
@@ -238,12 +323,22 @@ function attachHiddenTabListeners(tabId, view) {
     console.log('[HIDDEN] did-stop-loading for tabId:', tabId);
   });
 
-  // No setWindowOpenHandler: hidden tabs must never trigger __new_tab__ in React.
+  // Explicitly deny window.open so hidden tabs never spawn unexpected popups or trigger __new_tab__ in React
+  webContents.setWindowOpenHandler(({ url }) => {
+    console.log('[HIDDEN] window-open-handler denied for hidden tabId:', tabId, 'url:', url);
+    return { action: 'deny' };
+  });
+
   // No notifyRenderer calls: hidden tabs must never affect visible tab state.
 }
 
 function loadTabUrl(view, url) {
   if (!url || url === 'comex://launchpad' || url === 'nexus://launchpad' || url === 'about:blank') {
+    view.webContents.loadURL('about:blank').catch(() => {});
+    return;
+  }
+  if (!isSafeNavigationUrl(url)) {
+    console.warn('[SECURITY] Blocked navigation to unsafe URL:', url);
     view.webContents.loadURL('about:blank').catch(() => {});
     return;
   }
@@ -276,6 +371,64 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+
+  if (isVisualCursorEnabled) {
+    createCursorWindow();
+  }
+}
+
+function createCursorWindow() {
+  if (!isVisualCursorEnabled || !mainWindow || mainWindow.isDestroyed()) return;
+  if (cursorWindow && !cursorWindow.isDestroyed()) return;
+
+  const winBounds = mainWindow.getContentBounds();
+  const width = winBounds.width || 1400;
+  const height = winBounds.height || 900;
+  console.log('[CURSOR] Creating cursorWindow with initial bounds:', { x: winBounds.x, y: winBounds.y, width, height });
+
+  cursorWindow = new BrowserWindow({
+    parent: mainWindow,
+    width: width,
+    height: height,
+    x: winBounds.x,
+    y: winBounds.y,
+    frame: false,
+    transparent: true,
+    hasShadow: false,
+    focusable: false,
+    show: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'cursor_preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  cursorWindow.setIgnoreMouseEvents(true, { forward: true });
+  cursorWindow.setAlwaysOnTop(true, 'pop-up-menu');
+  cursorWindow.loadFile(path.join(__dirname, 'cursor_overlay.html'));
+  cursorWindow.showInactive();
+
+  cursorWindow.webContents.on('did-finish-load', () => {
+    console.log('[CURSOR] Overlay HTML loaded successfully!');
+  });
+  cursorWindow.webContents.on('did-fail-load', (_e, code, desc) => {
+    console.error('[CURSOR] Overlay HTML failed to load:', code, desc);
+  });
+
+  const syncCursorBounds = () => {
+    if (!cursorWindow || cursorWindow.isDestroyed() || !mainWindow || mainWindow.isDestroyed()) return;
+    cursorWindow.setBounds(mainWindow.getContentBounds());
+  };
+
+  mainWindow.on('resize', syncCursorBounds);
+  mainWindow.on('move', syncCursorBounds);
+  mainWindow.once('ready-to-show', syncCursorBounds);
+  mainWindow.on('minimize', () => {
+    resetVisualCursor();
+  });
+  // On focus: cursor remains hidden until the next agent click (no stale restore)
 }
 
 app.whenReady().then(() => {
@@ -294,7 +447,9 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.on('tabs-create', (_event, tabId, url) => {
+ipcMain.on('tabs-create', (event, tabId, url) => {
+  if (!isAuthorizedSender(event)) return;
+  if (typeof tabId !== 'string' || !tabId) return;
   if (views.has(tabId)) return;
 
   const view = new WebContentsView({
@@ -314,7 +469,9 @@ ipcMain.on('tabs-create', (_event, tabId, url) => {
   loadTabUrl(view, url);
 });
 
-ipcMain.on('tabs-create-hidden-agent', (_event, tabId, url) => {
+ipcMain.on('tabs-create-hidden-agent', (event, tabId, url) => {
+  if (!isAuthorizedSender(event)) return;
+  if (typeof tabId !== 'string' || !tabId) return;
   if (hiddenAgentViews.has(tabId) || views.has(tabId)) return;
 
   const view = new WebContentsView({
@@ -330,21 +487,23 @@ ipcMain.on('tabs-create-hidden-agent', (_event, tabId, url) => {
   );
 
   hiddenAgentViews.set(tabId, view);
-  attachTabListeners(tabId, view);
+  attachHiddenTabListeners(tabId, view);
   
-  // Append tabId as a hash so agent_service can unambiguously locate it via CDP
+  // Append tabId as a hash so agent_service can locate it via CDP
   const targetUrl = url ? `${url}#${tabId}` : `about:blank#${tabId}`;
   loadTabUrl(view, targetUrl);
 });
 
-ipcMain.on('tabs-destroy-hidden-agent', (_event, tabId) => {
+ipcMain.on('tabs-destroy-hidden-agent', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   const view = hiddenAgentViews.get(tabId);
   if (!view) return;
   if (!view.webContents.isDestroyed()) view.webContents.close();
   hiddenAgentViews.delete(tabId);
 });
 
-ipcMain.on('tabs-destroy', (_event, tabId) => {
+ipcMain.on('tabs-destroy', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   const view = views.get(tabId);
   if (!view) return;
 
@@ -359,28 +518,33 @@ ipcMain.on('tabs-destroy', (_event, tabId) => {
   }
 });
 
-ipcMain.on('tabs-set-active', (_event, tabId) => {
+ipcMain.on('tabs-set-active', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   activeTabId = tabId;
   syncActiveView();
 });
 
-ipcMain.on('tabs-navigate', (_event, tabId, url) => {
+ipcMain.on('tabs-navigate', (event, tabId, url) => {
+  if (!isAuthorizedSender(event)) return;
   const view = views.get(tabId);
   if (!view) return;
   loadTabUrl(view, url);
 });
 
-ipcMain.on('tabs-go-back', (_event, tabId) => {
+ipcMain.on('tabs-go-back', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   const view = views.get(tabId);
   if (view) goBack(view.webContents);
 });
 
-ipcMain.on('tabs-go-forward', (_event, tabId) => {
+ipcMain.on('tabs-go-forward', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   const view = views.get(tabId);
   if (view) goForward(view.webContents);
 });
 
-ipcMain.on('tabs-reload', (_event, tabId) => {
+ipcMain.on('tabs-reload', (event, tabId) => {
+  if (!isAuthorizedSender(event)) return;
   const view = views.get(tabId);
   if (!view) return;
   const url = view.webContents.getURL();
@@ -388,8 +552,180 @@ ipcMain.on('tabs-reload', (_event, tabId) => {
   view.webContents.reload();
 });
 
-ipcMain.on('tabs-set-bounds', (_event, bounds) => {
+ipcMain.on('tabs-set-bounds', (event, bounds) => {
+  if (!isAuthorizedSender(event)) return;
   console.log('[MAIN] tabs-set-bounds received:', bounds);
   currentBounds = bounds || currentBounds;
   syncActiveView();
 });
+
+ipcMain.on('cursor-animate', (event, data) => {
+  if (!isAuthorizedSender(event)) return;
+  console.log(`[CURSOR] Received cursor event x=${data?.x} y=${data?.y} tabId=${data?.tabId}`);
+  if (!isVisualCursorEnabled) {
+    console.log('[CURSOR] Ignored: isVisualCursorEnabled is false');
+    return;
+  }
+  if (!cursorWindow || cursorWindow.isDestroyed()) {
+    console.log('[CURSOR] cursorWindow is null/destroyed, lazily initializing...');
+    createCursorWindow();
+  }
+  if (!cursorWindow || cursorWindow.isDestroyed()) {
+    console.error('[CURSOR] Could not create cursorWindow!');
+    return;
+  }
+
+  // Background-tab filtering: only animate if event is for the active foreground tab
+  const isTargetActive = !data?.tabId || data.tabId === 'active_tab' || data.tabId === activeTabId;
+  if (!isTargetActive) {
+    console.log('[CURSOR] Dropped background tab event:', data.tabId, 'vs active:', activeTabId);
+    return;
+  }
+  // Coordinate translation: currentBounds.x + target_x, currentBounds.y + target_y
+  const viewX = Math.round(currentBounds.x || 0);
+  const viewY = Math.round(currentBounds.y || 0);
+  const targetX = Math.round(viewX + (data?.x || 0));
+  const targetY = Math.round(viewY + (data?.y || 0));
+
+  console.log('[CURSOR] Dispatching to cursorWindow at translated:', { x: targetX, y: targetY });
+  cursorWindow.webContents.send('cursor-animate', {
+    x: targetX,
+    y: targetY,
+    action: data?.action || 'click',
+  });
+});
+
+ipcMain.on('cursor-reset', (event) => {
+  if (!isAuthorizedSender(event)) return;
+  resetVisualCursor();
+});
+
+// ============================================================================
+// Narrowly Scoped Main-Process Agent Request Proxy
+// Attaches internalAppToken strictly within trusted main process code.
+// The renderer never receives the reusable internal application credential.
+// ============================================================================
+
+ipcMain.handle('agent-run', async (event, payload) => {
+  if (!isAuthorizedSender(event)) {
+    throw new Error('Unauthorized IPC sender');
+  }
+  if (!payload || typeof payload !== 'object' || typeof payload.task !== 'string') {
+    throw new Error('Invalid request payload schema: task is required.');
+  }
+  if (!internalAppToken) {
+    throw new Error('COMEX_INTERNAL_APP_TOKEN is not configured (fail closed).');
+  }
+
+  const cleanPayload = { ...payload };
+  delete cleanPayload.contextToken; // Remove any renderer-provided credential field
+  delete cleanPayload.workerId;     // Renderer initiates user tasks, never worker impersonation
+  delete cleanPayload.workerToken;
+
+  if (!cleanPayload.tabId || cleanPayload.tabId === activeTabId) {
+    cleanPayload.tabId = 'active_tab';
+  }
+
+  const resp = await fetch('http://127.0.0.1:8000/agent/run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Comex-Internal-Token': internalAppToken,
+    },
+    body: JSON.stringify(cleanPayload),
+  });
+  return await resp.json();
+});
+
+ipcMain.handle('agent-stop', async (event, taskId) => {
+  if (!isAuthorizedSender(event)) throw new Error('Unauthorized IPC sender');
+  if (typeof taskId !== 'string' || !taskId) throw new Error('Invalid taskId');
+  if (!internalAppToken) throw new Error('COMEX_INTERNAL_APP_TOKEN is not configured (fail closed).');
+
+  const resp = await fetch('http://127.0.0.1:8000/agent/stop', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Comex-Internal-Token': internalAppToken,
+    },
+    body: JSON.stringify({ taskId }),
+  });
+  return await resp.json();
+});
+
+const activeAgentStreams = new Map();
+
+ipcMain.handle('agent-stream-start', async (event, { streamId, payload }) => {
+  if (!isAuthorizedSender(event)) throw new Error('Unauthorized IPC sender');
+  if (typeof streamId !== 'string' || !streamId) throw new Error('Invalid streamId');
+  if (!payload || typeof payload !== 'object' || typeof payload.task !== 'string') {
+    throw new Error('Invalid request payload schema: task is required.');
+  }
+  if (!internalAppToken) {
+    throw new Error('COMEX_INTERNAL_APP_TOKEN is not configured (fail closed).');
+  }
+
+  const cleanPayload = { ...payload };
+  delete cleanPayload.contextToken;
+  delete cleanPayload.workerId;
+  delete cleanPayload.workerToken;
+
+  if (!cleanPayload.tabId || cleanPayload.tabId === activeTabId) {
+    cleanPayload.tabId = 'active_tab';
+  }
+
+  const controller = new AbortController();
+  activeAgentStreams.set(streamId, controller);
+
+  try {
+    const resp = await fetch('http://127.0.0.1:8000/agent/run/stream', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Comex-Internal-Token': internalAppToken,
+      },
+      body: JSON.stringify(cleanPayload),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(`agent-stream-error:${streamId}`, `HTTP ${resp.status}: ${errText}`);
+      }
+      activeAgentStreams.delete(streamId);
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const textChunk = decoder.decode(value, { stream: true });
+      if (!mainWindow || mainWindow.isDestroyed()) break;
+      mainWindow.webContents.send(`agent-stream-chunk:${streamId}`, textChunk);
+    }
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(`agent-stream-end:${streamId}`);
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError' && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(`agent-stream-error:${streamId}`, err.message || String(err));
+    }
+  } finally {
+    activeAgentStreams.delete(streamId);
+  }
+});
+
+ipcMain.on('agent-stream-abort', (event, streamId) => {
+  if (!isAuthorizedSender(event)) return;
+  const controller = activeAgentStreams.get(streamId);
+  if (controller) {
+    controller.abort();
+    activeAgentStreams.delete(streamId);
+  }
+});
+

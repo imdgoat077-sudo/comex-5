@@ -23,7 +23,7 @@ load_dotenv()
 
 ROUTER_API_KEY = os.getenv('ROUTER_API_KEY', '')
 OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'http://localhost:20128/v1')
-MODEL_NAME = os.getenv('MODEL_NAME', 'ag/gemini-3.7-flash-medium')
+MODEL_NAME = os.getenv('MODEL_NAME', 'ag/gemini-3.8-flash')
 CDP_URL = os.getenv('CDP_URL', 'http://127.0.0.1:9222')
 GRAPH_DB_PATH = os.path.expanduser(os.getenv('GRAPH_DB_PATH', '~/.comex/graph.db'))
 os.makedirs(os.path.dirname(GRAPH_DB_PATH), exist_ok=True)

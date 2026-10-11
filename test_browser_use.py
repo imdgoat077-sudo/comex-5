@@ -14,7 +14,7 @@ load_dotenv()
 CDP_URL = os.getenv('CDP_URL', 'http://127.0.0.1:9222')
 ROUTER_API_KEY = os.getenv('ROUTER_API_KEY', 'sk-test-key')
 OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'http://localhost:20128/v1')
-MODEL_NAME = os.getenv('MODEL_NAME', 'ag/gemini-3.7-flash-medium')
+MODEL_NAME = os.getenv('MODEL_NAME', 'ag/gemini-3.8-flash')
 
 async def test_browser_use():
     print(f"Connecting to CDP: {CDP_URL}")

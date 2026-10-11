@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Heavy Animated DOM Benchmark Fixture</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 0;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    #controls {
+      position: sticky;
+      top: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      z-index: 1000;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .action-btn {
+      padding: 10px 20px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .action-btn:hover { background: #2563eb; }
+    #heavy-grid {
+      display: grid;
+      grid-template-columns: repeat(50, 1fr);
+      gap: 2px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 100%;
+      height: 14px;
+      background: #1e293b;
+      border-radius: 2px;
+      transition: background-color 100ms;
+    }
+    .cell.active {
+      background: #06b6d4;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button class="action-btn" id="heavy-target-btn">Click Heavy Target</button>
+    <div id="click-feedback">Clicks: 0</div>
+    <div id="fps-display">Active nodes: 5000</div>
+  </div>
+
+  <div id="heavy-grid"></div>
+
+  <script>
+    window.__heavy_clicks = 0;
+    const feedback = document.getElementById('click-feedback');
+    const target = document.getElementById('heavy-target-btn');
+
+    target.addEventListener('click', () => {
+      window.__heavy_clicks++;
+      feedback.textContent = `Clicks: ${window.__heavy_clicks}`;
+    });
+
+    const grid = document.getElementById('heavy-grid');
+    const cells = [];
+    const NUM_NODES = 5000;
+
+    for (let i = 0; i < NUM_NODES; i++) {
+      const d = document.createElement('div');
+      d.className = 'cell';
+      d.id = `cell-${i}`;
+      grid.appendChild(d);
+      cells.push(d);
+    }
+
+    // High-frequency animation loop continuously mutating style properties
+    let animIdx = 0;
+    function animLoop() {
+      for (let j = 0; j < 25; j++) {
+        const idx = (animIdx + j * 197) % NUM_NODES;
+        cells[idx].classList.toggle('active');
+      }
+      animIdx = (animIdx + 1) % NUM_NODES;
+      requestAnimationFrame(animLoop);
+    }
+    requestAnimationFrame(animLoop);
+  </script>
+</body>
+</html>

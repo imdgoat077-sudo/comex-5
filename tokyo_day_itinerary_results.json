@@ -1,0 +1,816 @@
+{
+  "metadata": {
+    "task": "Tokyo Day Itinerary",
+    "model": "ag/gemini-3.7-flash-medium",
+    "cdp_url": "http://127.0.0.1:9222",
+    "timestamp": "2026-09-18T19:52:39Z"
+  },
+  "metrics": {
+    "task_completion": "FAIL",
+    "total_wall_clock_time": 351.91,
+    "number_of_browser_actions": 84,
+    "number_of_clicks": 21,
+    "number_of_text_entries": 23,
+    "number_of_back_navigations": 8,
+    "number_of_scrolls": 1,
+    "number_of_page_navigations": 1,
+    "number_of_retries": 2,
+    "number_of_failed_actions": 1,
+    "number_of_stale_or_missing_targets": 1,
+    "number_of_llm_turns": 100,
+    "final_data_correctness": "INCOMPLETE / UNVERIFIED",
+    "failure_reason": "Max turns reached without finish",
+    "browser_click_calls": 21,
+    "allow_decisions": 21,
+    "route_to_known_handler_decisions": 0,
+    "report_blocked_decisions": 0,
+    "runtime_safety_aborts": 0,
+    "click_latencies_ms": [
+      56.22,
+      64.52,
+      32.73,
+      58.96,
+      49.43,
+      60.21,
+      51.92,
+      46.52,
+      40.63,
+      48.09,
+      53.68,
+      53.58,
+      56.46,
+      52.94,
+      35.72,
+      57.71,
+      51.31,
+      53.67,
+      44.01,
+      37.8,
+      33.38
+    ],
+    "selected_places": [
+      {
+        "category": "Attraction",
+        "name": "Yoyogi Park",
+        "rating": 4.4,
+        "reviews": "27,531 reviews",
+        "address": "2-1 Yoyogikamizonocho, Shibuya, Tokyo 151-0052, Japan",
+        "timestamp": 48.01846499997191
+      },
+      {
+        "category": "Attraction",
+        "name": "Meiji Jingu Gyoen",
+        "rating": 4.5,
+        "reviews": "1,143 reviews",
+        "address": "1-1 Yoyogikamizonocho, Shibuya, Tokyo 151-8557, Japan",
+        "timestamp": 80.30502420803532
+      },
+      {
+        "category": "Attraction",
+        "name": "Shinjuku Gyoen National Garden",
+        "rating": 4.6,
+        "reviews": "45,706 reviews",
+        "address": "11 Naitomachi, Shinjuku City, Tokyo 160-0014, Japan",
+        "timestamp": 130.77120037504937
+      },
+      {
+        "category": "Cafe",
+        "name": "Sulbing Caf\u00e9 Harajuku",
+        "rating": 4.7,
+        "reviews": "487 reviews",
+        "address": "Japan, \u3012150-0001 Tokyo, Shibuya, Jingumae, 4 Chome\u221231\u221211 2F",
+        "timestamp": 151.61893687502015
+      },
+      {
+        "category": "Cafe",
+        "name": "All Seasons Coffee",
+        "rating": 4.4,
+        "reviews": "1,368 reviews",
+        "address": "Japan, \u3012160-0022 Tokyo, Shinjuku City, Shinjuku, 2 Chome\u22127\u22127 1F",
+        "timestamp": 177.75046400004067
+      },
+      {
+        "category": "Restaurant",
+        "name": "Kyushu Jangara Ramen Harajuku",
+        "rating": 4.5,
+        "reviews": "2,188 reviews",
+        "address": "Japan, \u3012150-0001 Tokyo, Shibuya, Jingumae, 1 Chome\u221213\u221221 \uff11\uff26",
+        "timestamp": 212.08633349998854
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "name": "Jing\u016b Bashi (Shrine Bridge)",
+        "category": "Attraction",
+        "rating": "4.2",
+        "reason": "Rating 4.2 is below the minimum threshold of 4.3 for Attractions",
+        "timestamp": 64.53933020797558
+      },
+      {
+        "name": "Harajuku Gyozarou",
+        "category": "Restaurant",
+        "rating": "4.0",
+        "reason": "Rating 4.0 is below the minimum threshold of 4.2 for Restaurants",
+        "timestamp": 199.0482523329556
+      }
+    ],
+    "legs": [
+      {
+        "from": "Shibuya Station",
+        "to": "Yoyogi Park",
+        "distance": "650 m",
+        "walking_time": "10 min"
+      },
+      {
+        "from": "Yoyogi Park",
+        "to": "Kyushu Jangara Ramen Harajuku",
+        "distance": "220 m",
+        "walking_time": "3 min"
+      },
+      {
+        "from": "Kyushu Jangara Ramen Harajuku",
+        "to": "Sulbing Caf\u00e9 Harajuku",
+        "distance": "350 m",
+        "walking_time": "5 min"
+      },
+      {
+        "from": "Sulbing Caf\u00e9 Harajuku",
+        "to": "Meiji Jingu Gyoen",
+        "distance": "1.1 km",
+        "walking_time": "16 min"
+      },
+      {
+        "from": "Meiji Jingu Gyoen",
+        "to": "Shinjuku Gyoen National Garden",
+        "distance": "1.5 km",
+        "walking_time": "21 min"
+      },
+      {
+        "from": "Shinjuku Gyoen National Garden",
+        "to": "All Seasons Coffee",
+        "distance": "290 m",
+        "walking_time": "4 min"
+      }
+    ],
+    "total_walking_distance": "",
+    "total_walking_time": "",
+    "tool_trace": [
+      {
+        "action": "navigate",
+        "url": "https://www.google.com/maps",
+        "timestamp": 4.179500874946825,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 19.320353875053115,
+        "status": "success",
+        "view": "base_map"
+      },
+      {
+        "action": "type_text",
+        "selector": "#ucc-1",
+        "text": "attractions in Harajuku Shibuya Tokyo",
+        "press_enter": true,
+        "timestamp": 23.217228749999776,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 28.38707041705493,
+        "status": "success",
+        "view": "base_map"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "tourist attractions near Meiji Jingu Shibuya",
+        "press_enter": true,
+        "timestamp": 30.387877624947578,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 35.68709670798853,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "scroll",
+        "selector": "div[role=\"feed\"]",
+        "delta_y": 800,
+        "timestamp": 37.440893582999706,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 40.95883020805195,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Yoyogi Park\"]",
+        "timestamp": 42.80427912494633,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Yoyogi Park\"]' at (217.0, 253.2) in 55ms (decision: ALLOW).",
+        "duration_ms": 56.22,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 45.58934462501202,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 54.30318479205016,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 63ms (decision: ALLOW).",
+        "duration_ms": 64.52,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 57.42826229194179,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Jing\u016b Bashi (Shrine Bridge)\"]",
+        "timestamp": 59.36226191697642,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Jing\u016b Bashi (Shrine Bridge)\"]' at (217.0, 398.5) in 32ms (decision: ALLOW).",
+        "duration_ms": 32.73,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 62.58299970801454,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 68.47321966697928,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 58ms (decision: ALLOW).",
+        "duration_ms": 58.96,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 72.88294695795048,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Meiji Jingu Gyoen\"]",
+        "timestamp": 74.93745824997313,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Meiji Jingu Gyoen\"]' at (217.0, 543.8) in 48ms (decision: ALLOW).",
+        "duration_ms": 49.43,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 78.41046512499452,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 82.45127112499904,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 59ms (decision: ALLOW).",
+        "duration_ms": 60.21,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 85.56218895805068,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "Shinjuku Gyoen National Garden",
+        "press_enter": true,
+        "timestamp": 87.62219791696407,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 93.04470770794433,
+        "status": "success",
+        "view": "base_map"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "Shinjuku Gyoen National Garden Tokyo",
+        "press_enter": true,
+        "timestamp": 104.57856662501581,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 110.195920499973,
+        "status": "success",
+        "view": "base_map"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "tourist attractions in Shinjuku",
+        "press_enter": true,
+        "timestamp": 112.40680654195603,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 117.95296695805155,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Shinjuku Gyoen National Garden\"]",
+        "timestamp": 120.2197710420005,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Shinjuku Gyoen National Garden\"]' at (217.0, 354.8) in 51ms (decision: ALLOW).",
+        "duration_ms": 51.92,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 123.46171512501314,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Shinjuku Gyoen National Garden\"]",
+        "timestamp": 125.4895944170421,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Shinjuku Gyoen National Garden\"]' at (217.0, 354.8) in 46ms (decision: ALLOW).",
+        "duration_ms": 46.52,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 128.41475737502333,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 133.00198679196183,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 39ms (decision: ALLOW).",
+        "duration_ms": 40.63,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 136.2548208750086,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "cafe near Harajuku Shibuya",
+        "press_enter": true,
+        "timestamp": 139.0252220829716,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 144.24804112501442,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Sulbing Caf\u00e9 Harajuku\"]",
+        "timestamp": 146.19637933303602,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Sulbing Caf\u00e9 Harajuku\"]' at (217.0, 264.0) in 47ms (decision: ALLOW).",
+        "duration_ms": 48.09,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 149.47274762496818,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 153.7471445420524,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 53ms (decision: ALLOW).",
+        "duration_ms": 53.68,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 157.47889029199723,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "cafe near Shinjuku Gyoen",
+        "press_enter": true,
+        "timestamp": 159.30334179196507,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 164.7277849999955,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"All Seasons Coffee\"]",
+        "timestamp": 166.8809847079683,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"All Seasons Coffee\"]' at (217.0, 354.8) in 52ms (decision: ALLOW).",
+        "duration_ms": 53.58,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 169.9520998330554,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"All Seasons Coffee\"]",
+        "timestamp": 171.96758337505162,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"All Seasons Coffee\"]' at (217.0, 354.8) in 55ms (decision: ALLOW).",
+        "duration_ms": 56.46,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 175.38116174994502,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 180.09172354196198,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 52ms (decision: ALLOW).",
+        "duration_ms": 52.94,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 183.65295074996538,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "restaurants in Harajuku Jingumae",
+        "press_enter": true,
+        "timestamp": 185.7542243329808,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 191.2766196669545,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Harajuku Gyozarou\"]",
+        "timestamp": 193.88050670805387,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Harajuku Gyozarou\"]' at (217.0, 253.2) in 35ms (decision: ALLOW).",
+        "duration_ms": 35.72,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 197.09532620804384,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 201.00136604194995,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 55ms (decision: ALLOW).",
+        "duration_ms": 57.71,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 204.25804387498647,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Kyushu Jangara Ramen Harajuku\"]",
+        "timestamp": 206.41143745800946,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Kyushu Jangara Ramen Harajuku\"]' at (217.0, 398.8) in 50ms (decision: ALLOW).",
+        "duration_ms": 51.31,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 209.6535947920056,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Back\"]",
+        "timestamp": 214.1918195829494,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Back\"]' at (60.0, 42.0) in 52ms (decision: ALLOW).",
+        "duration_ms": 53.67,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 217.26702425000258,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[name=\"q\"]",
+        "text": "Shibuya Station",
+        "press_enter": true,
+        "timestamp": 219.5102734999964,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 225.01272154203616,
+        "status": "success",
+        "view": "feed"
+      },
+      {
+        "action": "click",
+        "selector": "a[aria-label=\"Shibuya Station\"]",
+        "timestamp": 228.1181652919622,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'a[aria-label=\"Shibuya Station\"]' at (220.0, 130.0) in 43ms (decision: ALLOW).",
+        "duration_ms": 44.01,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 232.10896429198328,
+        "status": "success",
+        "view": "detail"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Directions\"]",
+        "timestamp": 234.46606100001372,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Successfully clicked element 'button[aria-label=\"Directions\"]' at (73.8, 461.0) in 37ms (decision: ALLOW).",
+        "duration_ms": 37.8,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 237.48404862498865,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Walking\"]",
+        "timestamp": 239.76646425004583,
+        "gate_decision": "ALLOW",
+        "rule_name": "AllRulesPassed",
+        "executed": true,
+        "result": "Error clicking element 'button[aria-label=\"Walking\"]': Selector 'button[aria-label=\"Walking\"]' not found in document",
+        "duration_ms": 33.38,
+        "status": "failed"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Shibuya Station",
+        "press_enter": true,
+        "timestamp": 243.29470283305272,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Yoyogi Park",
+        "press_enter": true,
+        "timestamp": 248.80913845798932,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 254.32822483300697,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Yoyogi Park",
+        "press_enter": true,
+        "timestamp": 258.32118416693993,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Kyushu Jangara Ramen Harajuku",
+        "press_enter": true,
+        "timestamp": 263.7534129170235,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 269.08027683303226,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Kyushu Jangara Ramen Harajuku",
+        "press_enter": true,
+        "timestamp": 273.3968444169732,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Sulbing Caf\u00e9 Harajuku",
+        "press_enter": true,
+        "timestamp": 278.75556924997363,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 284.1273364169756,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Sulbing Caf\u00e9 Harajuku",
+        "press_enter": true,
+        "timestamp": 288.6344291670248,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Meiji Jingu Gyoen",
+        "press_enter": true,
+        "timestamp": 294.06289766693953,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 302.4609280000441,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Meiji Jingu Gyoen",
+        "press_enter": true,
+        "timestamp": 306.8604385419749,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Shinjuku Gyoen National Garden",
+        "press_enter": true,
+        "timestamp": 312.4891082920367,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 318.02315633301623,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Shinjuku Gyoen National Garden",
+        "press_enter": true,
+        "timestamp": 323.4511266249465,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "All Seasons Coffee",
+        "press_enter": true,
+        "timestamp": 328.8785613749642,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 334.6822182079777,
+        "status": "success",
+        "view": "directions"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "All Seasons Coffee",
+        "press_enter": true,
+        "timestamp": 339.56902091694064,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Shinjuku Station",
+        "press_enter": true,
+        "timestamp": 346.08813262498006,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 351.9053598330356,
+        "status": "success",
+        "view": "directions"
+      }
+    ]
+  }
+}

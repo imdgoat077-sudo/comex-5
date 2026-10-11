@@ -21,13 +21,27 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class PartialWriteRollbackError(RuntimeError):
+    """Raised when a partial artifact write occurred and compensating rollback failed."""
+    def __init__(self, artifact_id: str, message: str) -> None:
+        super().__init__(message)
+        self.artifact_id = artifact_id
+
+
 class AgentGraphStore:
     def __init__(self, db_path: str):
         db_dir = os.path.dirname(os.path.abspath(db_path))
         os.makedirs(db_dir, exist_ok=True)
         self.db_path = db_path
-        self.db = kuzu.Database(db_path)
-        self.conn = kuzu.Connection(self.db)
+        # Configure bounded buffer pool, mmap virtual memory space, and thread count
+        # Default 8TB max_db_size triggers macOS ARM64 GPU carveout KERN_PROTECTION_FAILURE (SIGBUS 10).
+        self.db = kuzu.Database(
+            db_path,
+            buffer_pool_size=256 * 1024 * 1024,
+            max_db_size=4 * 1024 * 1024 * 1024,
+            max_num_threads=1
+        )
+        self.conn = kuzu.Connection(self.db, num_threads=1)
         self._lock = threading.Lock()
         with self._lock:
             run_migrations(self.conn)
@@ -279,17 +293,60 @@ class AgentGraphStore:
             return entity_id
 
 
-    def save_artifact(self, agent_id: str, title: str, artifact_type: str, content: str) -> str:
+    def delete_artifact(self, artifact_id: str) -> bool:
+        """Explicit store-level deletion for artifact compensation and cleanup."""
+        if not artifact_id or not isinstance(artifact_id, str) or not artifact_id.strip():
+            return False
+        with self._lock:
+            try:
+                query = "MATCH (a:Artifact {id: $id}) DETACH DELETE a"
+                self.conn.execute(query, {"id": artifact_id.strip()})
+                return True
+            except Exception as e:
+                logger.error(f"Failed to delete artifact '{artifact_id}': {e}")
+                return False
+
+    def save_artifact(
+        self,
+        agent_id: str,
+        title: str,
+        artifact_type: str,
+        content: str,
+        source_url: str = "",
+        source_run_id: str = "",
+        source_task_id: str = "",
+    ) -> str:
         with self._lock:
             now = _utcnow()
             artifact_id = f"art_{uuid.uuid4().hex}"
+
+            # Validate agent existence before storing as graph-Agent provenance
+            valid_agent_id = ""
+            if agent_id and isinstance(agent_id, str) and agent_id.strip():
+                clean_aid = agent_id.strip()
+                try:
+                    check_q = "MATCH (ag:Agent {id: $aid}) RETURN count(ag)"
+                    check_res = self.conn.execute(check_q, {"aid": clean_aid})
+                    if check_res.has_next() and check_res.get_next()[0] > 0:
+                        valid_agent_id = clean_aid
+                    else:
+                        logger.warning(
+                            f"save_artifact: agent_id '{clean_aid}' does not exist in Agent table. "
+                            f"Storing empty source_agent_id and omitting CREATED_ARTIFACT relationship."
+                        )
+                except Exception as check_err:
+                    logger.warning(f"save_artifact: failed to verify agent existence: {check_err}")
+
             query = """
             MERGE (a:Artifact {id: $id})
             ON CREATE SET a.artifact_type = $type,
                           a.title = $title,
                           a.content = $content,
                           a.created_at = $now,
-                          a.source_agent_id = $agent_id
+                          a.source_agent_id = $agent_id,
+                          a.source_url = $source_url,
+                          a.source_run_id = $source_run_id,
+                          a.source_task_id = $source_task_id
             """
             params = {
                 "id": artifact_id,
@@ -297,24 +354,46 @@ class AgentGraphStore:
                 "title": title or "Untitled Artifact",
                 "content": content or "",
                 "now": now,
-                "agent_id": agent_id
+                "agent_id": valid_agent_id,
+                "source_url": source_url or "",
+                "source_run_id": source_run_id or "",
+                "source_task_id": source_task_id or "",
             }
+            node_created = False
             try:
                 self.conn.execute(query, params)
-                if agent_id:
+                node_created = True
+                if valid_agent_id:
                     rel_q = """
                     MATCH (ag:Agent {id: $agent_id}), (a:Artifact {id: $id})
                     MERGE (ag)-[:CREATED_ARTIFACT]->(a)
                     """
-                    self.conn.execute(rel_q, {"agent_id": agent_id, "id": artifact_id})
+                    self.conn.execute(rel_q, {"agent_id": valid_agent_id, "id": artifact_id})
                 return artifact_id
             except Exception as e:
                 logger.warning(f"Failed to save artifact: {e}")
+                if node_created:
+                    # Partial write occurred: Artifact node was created, but subsequent step failed.
+                    # Perform best-effort rollback so no orphaned unlinked artifact node remains in Kùzu.
+                    try:
+                        cleanup_q = "MATCH (a:Artifact {id: $id}) DETACH DELETE a"
+                        self.conn.execute(cleanup_q, {"id": artifact_id})
+                        logger.info(f"Successfully rolled back partial artifact node {artifact_id}.")
+                    except Exception as cleanup_err:
+                        logger.error(f"CRITICAL: Failed to clean up partial artifact node {artifact_id}: {cleanup_err}")
+                        raise PartialWriteRollbackError(
+                            artifact_id,
+                            f"Partial artifact write failed and compensating rollback failed for '{artifact_id}': {cleanup_err}"
+                        ) from e
                 return ""
 
     def get_artifact(self, artifact_id: str) -> dict:
         with self._lock:
-            query = "MATCH (a:Artifact {id: $id}) RETURN a.title, a.artifact_type, a.content, a.created_at, a.source_agent_id"
+            query = (
+                "MATCH (a:Artifact {id: $id}) "
+                "RETURN a.title, a.artifact_type, a.content, a.created_at, "
+                "a.source_agent_id, a.source_url, a.source_run_id, a.source_task_id"
+            )
             try:
                 res = self.conn.execute(query, {"id": artifact_id})
                 if res.has_next():
@@ -324,8 +403,11 @@ class AgentGraphStore:
                         "title": row[0],
                         "artifact_type": row[1],
                         "content": row[2],
-                        "created_at": str(row[3]),
-                        "source_agent_id": row[4]
+                        "created_at": str(row[3]) if row[3] is not None else "",
+                        "source_agent_id": row[4] if len(row) > 4 and row[4] is not None else "",
+                        "source_url": row[5] if len(row) > 5 and row[5] is not None else "",
+                        "source_run_id": row[6] if len(row) > 6 and row[6] is not None else "",
+                        "source_task_id": row[7] if len(row) > 7 and row[7] is not None else "",
                     }
             except Exception as e:
                 logger.warning(f"Failed to get artifact {artifact_id}: {e}")
@@ -498,18 +580,19 @@ class AgentGraphStore:
         with self._lock:
             t0 = time.perf_counter()
             
+            norm_domain = (domain or "ALL").strip().upper() if isinstance(domain, str) else "ALL"
             domains_to_search = []
-            if domain == "ENTITIES":
+            if norm_domain == "ENTITIES":
                 domains_to_search = [("Entity", "Entity_FTS")]
-            elif domain == "HISTORY":
+            elif norm_domain == "HISTORY":
                 domains_to_search = [("Agent", "Agent_FTS"), ("ToolCall", "ToolCall_FTS")]
-            elif domain == "ARTIFACTS":
+            elif norm_domain == "ARTIFACTS":
                 domains_to_search = [("Artifact", "Artifact_FTS")]
-            elif domain == "USER":
+            elif norm_domain == "USER":
                 domains_to_search = [("UserMemory", "UserMemory_FTS")]
-            elif domain == "SKILLS":
+            elif norm_domain == "SKILLS":
                 domains_to_search = [("Skill", "Skill_FTS")]
-            else: # ALL
+            elif norm_domain == "ALL":
                 domains_to_search = [
                     ("Entity", "Entity_FTS"),
                     ("Agent", "Agent_FTS"),
@@ -518,8 +601,11 @@ class AgentGraphStore:
                     ("UserMemory", "UserMemory_FTS"),
                     ("Skill", "Skill_FTS")
                 ]
-                
+            else:
+                logger.warning(f"Unknown search domain '{domain}', returning empty results.")
             all_results = []
+            domains_attempted = len(domains_to_search)
+            failed_domains = []
             
             for table_name, index_name in domains_to_search:
                 q = f"""
@@ -542,14 +628,24 @@ class AgentGraphStore:
                         }
                         
                         if table_name == "Entity":
-                            result_dict["timestamp"] = str(node.get("first_seen_at"))
+                            first_seen = str(node.get("first_seen_at")) if node.get("first_seen_at") is not None else ""
+                            last_seen = str(node.get("last_seen_at")) if node.get("last_seen_at") is not None else first_seen
+                            result_dict["timestamp"] = first_seen
+                            result_dict["first_seen_at"] = first_seen
+                            result_dict["last_seen_at"] = last_seen
                             attrs = node.get("attrs")
-                            parsed_attrs = json.loads(attrs) if attrs else {}
+                            parsed_attrs = {}
+                            if attrs:
+                                try:
+                                    parsed_attrs = json.loads(attrs) if isinstance(attrs, str) else dict(attrs)
+                                except Exception as json_err:
+                                    logger.warning(f"Malformed attrs JSON for entity {node.get('id')}: {json_err}")
+                                    parsed_attrs = {"raw": str(attrs)}
                             type_ = node.get("type")
                             name = node.get("name")
                             price = node.get("price")
                             currency = node.get("currency")
-                            content = f"Entity Type: {type_}\\nName: {name}\\nPrice: {price} {currency}\\nAttributes: {json.dumps(parsed_attrs)}"
+                            content = f"Entity Type: {type_}\nName: {name}\nPrice: {price} {currency}\nAttributes: {json.dumps(parsed_attrs)}"
                             result_dict["content_excerpt"] = content
                             
                             prov_q = "MATCH (e:Entity {id: $id})<-[:EXTRACTED]-(tc:ToolCall) RETURN tc.id LIMIT 1"
@@ -558,16 +654,18 @@ class AgentGraphStore:
                                 result_dict["provenance"] = prov_res.get_next()[0]
                                 
                         elif table_name == "Agent":
-                            result_dict["timestamp"] = str(node.get("created_at"))
-                            result_dict["content_excerpt"] = f"Task: {node.get('task')}\\nStatus: {node.get('status')}"
+                            ts = node.get("created_at")
+                            result_dict["timestamp"] = str(ts) if ts is not None else ""
+                            result_dict["content_excerpt"] = f"Task: {node.get('task')}\nStatus: {node.get('status')}"
                             result_dict["provenance"] = node.get("id")
                             
                         elif table_name == "ToolCall":
-                            result_dict["timestamp"] = str(node.get("timestamp"))
+                            ts = node.get("timestamp")
+                            result_dict["timestamp"] = str(ts) if ts is not None else ""
                             tool_name = node.get("tool_name")
                             args_json = node.get("args_json")
                             result_summary = node.get("result_summary")
-                            result_dict["content_excerpt"] = f"Tool: {tool_name}\\nArgs: {args_json}\\nResult: {result_summary}"
+                            result_dict["content_excerpt"] = f"Tool: {tool_name}\nArgs: {args_json}\nResult: {result_summary}"
                             
                             prov_q = "MATCH (tc:ToolCall {id: $id})<-[:EXECUTED]-(a:Agent) RETURN a.id LIMIT 1"
                             prov_res = self.conn.execute(prov_q, {"id": node.get("id")})
@@ -575,44 +673,72 @@ class AgentGraphStore:
                                 result_dict["provenance"] = prov_res.get_next()[0]
                                 
                         elif table_name == "Artifact":
-                            result_dict["timestamp"] = str(node.get("created_at"))
+                            ts = node.get("created_at")
+                            result_dict["timestamp"] = str(ts) if ts is not None else ""
                             title = node.get("title")
                             content = node.get("content")
                             atype = node.get("artifact_type")
-                            result_dict["content_excerpt"] = f"Artifact [{atype}]: {title}\n{content}"
+                            source_url = node.get("source_url") or ""
+                            source_run_id = node.get("source_run_id") or ""
+                            source_task_id = node.get("source_task_id") or ""
+                            if source_url:
+                                result_dict["content_excerpt"] = f"Artifact [{atype}]: {title} (URL: {source_url})\n{content}"
+                                result_dict["source_url"] = str(source_url)
+                            else:
+                                result_dict["content_excerpt"] = f"Artifact [{atype}]: {title}\n{content}"
+
+                            if source_run_id:
+                                result_dict["source_run_id"] = str(source_run_id)
+                            if source_task_id:
+                                result_dict["source_task_id"] = str(source_task_id)
 
                             prov_q = "MATCH (a:Artifact {id: $id})<-[:CREATED_ARTIFACT]-(ag:Agent) RETURN ag.id LIMIT 1"
                             prov_res = self.conn.execute(prov_q, {"id": node.get("id")})
                             if prov_res.has_next():
                                 result_dict["provenance"] = prov_res.get_next()[0]
+                            elif node.get("source_agent_id"):
+                                result_dict["provenance"] = str(node.get("source_agent_id"))
+                            # If no Agent node or source_agent_id, keep provenance explicitly empty
 
                         elif table_name == "UserMemory":
-                            result_dict["timestamp"] = str(node.get("updated_at") or node.get("created_at"))
+                            ts = node.get("updated_at") or node.get("created_at")
+                            result_dict["timestamp"] = str(ts) if ts is not None else ""
                             cat = node.get("category")
                             k = node.get("key")
                             v = node.get("value")
                             result_dict["content_excerpt"] = f"User Memory [{cat}]: {k} = {v}"
-                            prov_q = "MATCH (u:UserMemory {id: $id})<-[:LEARNED_FROM]-(ag:Agent) RETURN ag.id LIMIT 1"
+                            prov_q = "MATCH (u:UserMemory {id: $id})-[:LEARNED_FROM]->(ag:Agent) RETURN ag.id LIMIT 1"
                             prov_res = self.conn.execute(prov_q, {"id": node.get("id")})
                             if prov_res.has_next():
                                 result_dict["provenance"] = prov_res.get_next()[0]
+                            elif node.get("source_agent_id"):
+                                result_dict["provenance"] = str(node.get("source_agent_id"))
 
                         elif table_name == "Skill":
-                            result_dict["timestamp"] = str(node.get("updated_at") or node.get("created_at"))
+                            ts = node.get("updated_at") or node.get("created_at")
+                            result_dict["timestamp"] = str(ts) if ts is not None else ""
                             sname = node.get("name")
                             sdomain = node.get("domain")
                             sdesc = node.get("description")
                             scode = node.get("code_snippet")
                             result_dict["content_excerpt"] = f"Skill: {sname} ({sdomain})\nDescription: {sdesc}\nCode:\n{scode}"
-                            prov_q = "MATCH (sk:Skill {id: $id})<-[:DISTILLED_FROM]-(ag:Agent) RETURN ag.id LIMIT 1"
+                            prov_q = "MATCH (sk:Skill {id: $id})-[:DISTILLED_FROM]->(ag:Agent) RETURN ag.id LIMIT 1"
                             prov_res = self.conn.execute(prov_q, {"id": node.get("id")})
                             if prov_res.has_next():
                                 result_dict["provenance"] = prov_res.get_next()[0]
+                            elif node.get("source_agent_id"):
+                                result_dict["provenance"] = str(node.get("source_agent_id"))
 
                         all_results.append(result_dict)
                 except Exception as e:
                     logger.warning(f"FTS search failed for {table_name}: {e}")
+                    failed_domains.append(table_name)
                     
+            if domains_attempted > 0 and len(failed_domains) == domains_attempted:
+                raise RuntimeError(
+                    f"FTS memory search failed across all queried domains ({', '.join(failed_domains)})."
+                )
+
             # Sort by score descending
             all_results.sort(key=lambda x: x["relevance_score"], reverse=True)
             
@@ -626,7 +752,15 @@ class AgentGraphStore:
             elapsed_ms = (time.perf_counter() - t0) * 1000.0
             logger.debug(f"Graph read search_memory completed in {elapsed_ms:.2f}ms")
             
+            if failed_domains:
+                class MemorySearchResults(list):
+                    def __init__(self, items, failed_domains=None):
+                        super().__init__(items)
+                        self.failed_domains = failed_domains or []
+                return MemorySearchResults(all_results, failed_domains=failed_domains)
+
             return all_results
+
 
     def search_procedures(self, abstract_query: str, limit: int = 2, threshold: float = 0.5) -> list[dict]:
         with self._lock:
@@ -1037,3 +1171,210 @@ class AgentGraphStore:
             query = "MATCH (s:Skill {id: $id}) DETACH DELETE s"
             self.conn.execute(query, {"id": skill_id})
             return True
+
+    def save_site_adapter(self, name: str, domain: str, action_intent: str,
+                          code_template: str, parameter_schema: dict | None = None,
+                          dom_fingerprint: dict | None = None,
+                          adapter_id: str | None = None,
+                          episode_id: str | None = None) -> str:
+        """Persist or update a compiled Fast-Path SiteAdapter."""
+        with self._lock:
+            now = _utcnow()
+            aid = adapter_id or f"adp_{uuid.uuid4().hex[:12]}"
+            param_schema_str = json.dumps(parameter_schema or {})
+            dom_fp_str = json.dumps(dom_fingerprint or {})
+
+            query = """
+            MERGE (a:SiteAdapter {id: $id})
+            ON CREATE SET a.name = $name,
+                          a.domain = $domain,
+                          a.action_intent = $action_intent,
+                          a.code_template = $code_template,
+                          a.parameter_schema = $param_schema,
+                          a.dom_fingerprint = $dom_fp,
+                          a.success_count = 1,
+                          a.failure_count = 0,
+                          a.last_success_at = $now,
+                          a.status = 'active',
+                          a.created_at = $now,
+                          a.updated_at = $now
+            ON MATCH SET a.name = $name,
+                         a.action_intent = $action_intent,
+                         a.code_template = $code_template,
+                         a.parameter_schema = $param_schema,
+                         a.dom_fingerprint = $dom_fp,
+                         a.status = 'active',
+                         a.updated_at = $now
+            """
+            params = {
+                "id": aid,
+                "name": name,
+                "domain": domain.lower(),
+                "action_intent": action_intent,
+                "code_template": code_template,
+                "param_schema": param_schema_str,
+                "dom_fp": dom_fp_str,
+                "now": now
+            }
+            self.conn.execute(query, params)
+
+            if episode_id:
+                try:
+                    rel_query = """
+                    MATCH (a:SiteAdapter {id: $aid}), (ep:Episode {id: $ep_id})
+                    MERGE (a)-[:COMPILED_FROM]->(ep)
+                    """
+                    self.conn.execute(rel_query, {"aid": aid, "ep_id": episode_id})
+                except Exception as re:
+                    logger.warning(f"Graph: failed to link COMPILED_FROM: {re}")
+
+            return aid
+
+    def find_matching_adapter(self, domain: str, intent_query: str, limit: int = 1) -> list[dict]:
+        """Find active compiled adapters for a domain matching an intent."""
+        with self._lock:
+            dom = domain.lower().strip()
+            query = """
+            MATCH (a:SiteAdapter)
+            WHERE (a.domain = $domain OR a.domain = '*') AND a.status <> 'broken'
+            RETURN a
+            ORDER BY a.success_count DESC, a.updated_at DESC
+            LIMIT 10
+            """
+            res = self.conn.execute(query, {"domain": dom})
+            matches = []
+            words = set(intent_query.lower().split())
+            while res.has_next():
+                item = res.get_next()[0]
+                adapter_dict = {
+                    "id": item.get("id"),
+                    "name": item.get("name"),
+                    "domain": item.get("domain"),
+                    "action_intent": item.get("action_intent"),
+                    "code_template": item.get("code_template"),
+                    "parameter_schema": json.loads(item.get("parameter_schema") or "{}"),
+                    "dom_fingerprint": json.loads(item.get("dom_fingerprint") or "{}"),
+                    "success_count": item.get("success_count", 0),
+                    "failure_count": item.get("failure_count", 0),
+                    "status": item.get("status", "active"),
+                }
+                target_intent = str(item.get("action_intent", "")).lower()
+                target_words = set(target_intent.split())
+                overlap = len(words & target_words)
+                adapter_dict["match_score"] = overlap
+                matches.append(adapter_dict)
+
+            matches.sort(key=lambda x: (x["match_score"], x["success_count"]), reverse=True)
+            return matches[:limit]
+
+    def record_adapter_outcome(self, adapter_id: str, success: bool) -> None:
+        """Update success/failure statistics and auto-degrade broken adapters."""
+        with self._lock:
+            now = _utcnow()
+            if success:
+                query = """
+                MATCH (a:SiteAdapter {id: $id})
+                SET a.success_count = a.success_count + 1,
+                    a.last_success_at = $now,
+                    a.status = 'active',
+                    a.updated_at = $now
+                """
+            else:
+                query = """
+                MATCH (a:SiteAdapter {id: $id})
+                SET a.failure_count = a.failure_count + 1,
+                    a.status = CASE WHEN a.failure_count >= 3 THEN 'broken' ELSE 'degraded' END,
+                    a.updated_at = $now
+                """
+            try:
+                self.conn.execute(query, {"id": adapter_id, "now": now})
+            except Exception as e:
+                logger.warning(f"Graph: failed to record adapter outcome: {e}")
+
+    def get_all_adapters(self, domain: str | None = None) -> list[dict]:
+        """Return all stored site adapters, optionally filtered by domain."""
+        with self._lock:
+            if domain:
+                query = "MATCH (a:SiteAdapter) WHERE a.domain = $domain RETURN a ORDER BY a.updated_at DESC"
+                res = self.conn.execute(query, {"domain": domain.lower()})
+            else:
+                query = "MATCH (a:SiteAdapter) RETURN a ORDER BY a.updated_at DESC"
+                res = self.conn.execute(query)
+            adapters = []
+            while res.has_next():
+                a = res.get_next()[0]
+                adapters.append({
+                    "id": a.get("id"),
+                    "name": a.get("name"),
+                    "domain": a.get("domain"),
+                    "action_intent": a.get("action_intent"),
+                    "code_template": a.get("code_template"),
+                    "parameter_schema": json.loads(a.get("parameter_schema") or "{}"),
+                    "dom_fingerprint": json.loads(a.get("dom_fingerprint") or "{}"),
+                    "success_count": a.get("success_count", 0),
+                    "failure_count": a.get("failure_count", 0),
+                    "status": a.get("status", "active"),
+                    "created_at": str(a.get("created_at")),
+                    "updated_at": str(a.get("updated_at"))
+                })
+            return adapters
+
+    def delete_adapter(self, adapter_id: str) -> bool:
+        """Delete an adapter by ID."""
+        with self._lock:
+            query = "MATCH (a:SiteAdapter {id: $id}) DETACH DELETE a"
+            self.conn.execute(query, {"id": adapter_id})
+            return True
+
+    def record_antipattern(self, domain: str, failed_selector: str, trap_type: str, mitigation_hint: str) -> str:
+        """Record or increment a known anti-pattern for a domain."""
+        with self._lock:
+            now = _utcnow()
+            ap_id = f"ap_{hash(f'{domain}:{failed_selector}') & 0xFFFFFFFF:08x}"
+            query = """
+            MERGE (ap:AntiPattern {id: $id})
+            ON CREATE SET ap.domain = $domain,
+                          ap.failed_selector = $failed_selector,
+                          ap.trap_type = $trap_type,
+                          ap.mitigation_hint = $mitigation_hint,
+                          ap.occurrence_count = 1,
+                          ap.last_seen_at = $now,
+                          ap.created_at = $now
+            ON MATCH SET ap.occurrence_count = ap.occurrence_count + 1,
+                         ap.mitigation_hint = $mitigation_hint,
+                         ap.last_seen_at = $now
+            """
+            params = {
+                "id": ap_id,
+                "domain": domain.lower(),
+                "failed_selector": failed_selector,
+                "trap_type": trap_type,
+                "mitigation_hint": mitigation_hint,
+                "now": now
+            }
+            self.conn.execute(query, params)
+            return ap_id
+
+    def get_domain_antipatterns(self, domain: str, limit: int = 5) -> list[dict]:
+        """Fetch known failure patterns for a domain."""
+        with self._lock:
+            query = """
+            MATCH (ap:AntiPattern)
+            WHERE ap.domain = $domain OR ap.domain = '*'
+            RETURN ap
+            ORDER BY ap.occurrence_count DESC, ap.last_seen_at DESC
+            LIMIT $limit
+            """
+            res = self.conn.execute(query, {"domain": domain.lower(), "limit": limit})
+            antipatterns = []
+            while res.has_next():
+                row = res.get_next()[0]
+                antipatterns.append({
+                    "id": row.get("id"),
+                    "domain": row.get("domain"),
+                    "failed_selector": row.get("failed_selector"),
+                    "trap_type": row.get("trap_type"),
+                    "mitigation_hint": row.get("mitigation_hint"),
+                    "occurrence_count": row.get("occurrence_count", 1)
+                })
+            return antipatterns

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 50px;
+    background: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 360px;
+    height: 240px;
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+  .btn {
+    padding: 12px 28px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    position: absolute;
+    left: 100px;
+    top: 90px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+  /* Ripple: ONLY the blue circle */
+  .ripple {
+    position: absolute;
+    left: 170px;
+    top: 110px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    background: rgba(56, 189, 248, 0.25);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 90;
+  }
+  /* Cursor: perfectly symmetric, tailless, rounded borders */
+  .cursor-container {
+    position: absolute;
+    left: 170px;
+    top: 110px;
+    width: 38px;
+    height: 38px;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .cursor-svg {
+    width: 38px;
+    height: 38px;
+    display: block;
+    overflow: visible;
+    filter: drop-shadow(0 4.5px 10px rgba(0, 0, 0, 0.45)) drop-shadow(0 1.5px 3.5px rgba(0, 0, 0, 0.28));
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <button class="btn">Click Me</button>
+    <div class="ripple"></div>
+    <div class="cursor-container">
+      <svg class="cursor-svg" viewBox="-1.8 -1.8 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0.5 0.5 
+                 L 8.5 30.5 
+                 C 9.3 32.3 11.3 32.7 13 31.5 
+                 L 19 19 
+                 L 31.5 13 
+                 C 32.7 11.3 32.3 9.3 30.5 8.5 
+                 Z"
+              fill="#000000"
+              stroke="#ffffff"
+              stroke-width="6.5"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+              style="paint-order: stroke fill;"/>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

@@ -25,7 +25,7 @@ decision in this plan:
 | **App-data directory** | `~/.comex/` does **NOT** exist yet. Closest pattern: `os.path.expanduser("~/.gemini/...")` used for SKILL.md loading. |
 | **browser-harness output** | Returns **raw `stdout + "\n" + stderr`** as a plain string. NOT structured JSON. This is the #1 blocker for reliable entity extraction. |
 | **browser-harness binary** | Installed at `~/.local/bin/browser-harness` via `uv`, bound to Python 3.12. |
-| **LLM integration** | `ChatOpenAI` from `langchain_openai`, model `ag/gemini-3.7-flash-medium` via proxy at `localhost:20128/v1`. |
+| **LLM integration** | `ChatOpenAI` from `langchain_openai`, model `ag/gemini-3.8-flash` via proxy at `localhost:20128/v1`. |
 | **Existing tools** | 2 tools: `run_browser_harness(code, target_tab_ws)` and `create_hidden_tab(url, tab_id)`. |
 | **Agent loop** | `execute_agent_loop()` — `for step in range(100)`, async, uses `asyncio.to_thread` for tool execution. |
 | **Concurrency model** | Multiple agent loops can run simultaneously (foreground + hidden tabs). `active_tasks: dict[str, asyncio.Task]` tracks them. |

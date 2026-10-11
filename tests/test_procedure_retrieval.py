@@ -99,7 +99,7 @@ async def test_full_agent_loop_procedural_retrieval(store):
             mock_agent.ainvoke = AsyncMock(return_value=AIMessage(content="Task completed, ignoring procedure."))
 
             # Normal new task WITHOUT memory triggers
-            result = await execute_agent_loop("Extract magic items", "http://fake")
+            result = await execute_agent_loop("Extract magic items", "http://fake", trusted_app_context=True)
 
             assert "Task completed" in result
 
@@ -130,7 +130,7 @@ async def test_low_confidence_rejected(store):
             from langchain_core.messages import AIMessage
             mock_agent.ainvoke = AsyncMock(return_value=AIMessage(content="Task completed."))
 
-            await execute_agent_loop("Extract magic items", "http://fake")
+            await execute_agent_loop("Extract magic items", "http://fake", trusted_app_context=True)
             human_msg = mock_agent.ainvoke.call_args[0][0][1].content
             
             # 5. low-confidence candidate rejected
@@ -148,7 +148,7 @@ async def test_graph_disabled_behavior():
         from langchain_core.messages import AIMessage
         mock_agent.ainvoke = AsyncMock(return_value=AIMessage(content="No graph."))
 
-        await execute_agent_loop("Extract items", "http://fake")
+        await execute_agent_loop("Extract items", "http://fake", trusted_app_context=True)
         human_msg = mock_agent.ainvoke.call_args[0][0][1].content
         
         assert "[AVAILABLE PROCEDURES]" not in human_msg

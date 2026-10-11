@@ -8,7 +8,7 @@
 
 ## A. CURRENT ARCHITECTURE
 
-Comex is a desktop AI browser built on **Electron + React (Vite)** with a **Python FastAPI backend** ([`agent_service.py`](file:///Users/pranavkumarn/Documents/Comex%20Good%20Versions/Comex%20copy%205/agent_service.py)) that drives browser automation via CDP. The AI agent loop uses LangChain's `ChatOpenAI` (model `ag/gemini-3.7-flash-medium` via local proxy at `localhost:20128/v1`).
+Comex is a desktop AI browser built on **Electron + React (Vite)** with a **Python FastAPI backend** ([`agent_service.py`](file:///Users/pranavkumarn/Documents/Comex%20Good%20Versions/Comex%20copy%205/agent_service.py)) that drives browser automation via CDP. The AI agent loop uses LangChain's `ChatOpenAI` (model `ag/gemini-3.8-flash` via local proxy at `localhost:20128/v1`).
 
 **Process topology (unchanged from original design):**
 ```

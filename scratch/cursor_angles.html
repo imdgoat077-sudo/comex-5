@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #334155;
+  }
+  .card h2 { font-size: 13px; margin: 0 0 10px 0; color: #cbd5e1; }
+  .canvas {
+    background: #ffffff;
+    height: 180px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background-image: 
+      radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .target-crosshair {
+    position: absolute;
+    left: 70px;
+    top: 60px;
+    width: 1px;
+    height: 30px;
+    background: #ef4444;
+    transform: translateY(-15px);
+    z-index: 200;
+  }
+  .target-crosshair-h {
+    position: absolute;
+    left: 70px;
+    top: 60px;
+    width: 30px;
+    height: 1px;
+    background: #ef4444;
+    transform: translateX(-15px);
+    z-index: 200;
+  }
+  .target-dot {
+    position: absolute;
+    left: 70px;
+    top: 60px;
+    width: 4px;
+    height: 4px;
+    background: #ef4444;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 210;
+  }
+  .ripple-preview {
+    position: absolute;
+    left: 70px;
+    top: 60px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    transform: translate(-50%, -50%);
+    z-index: 90;
+  }
+  .cursor-box {
+    position: absolute;
+    left: 70px;
+    top: 60px;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+  <h1 style="font-size: 18px; margin-bottom: 20px;">Diagonal Tilt vs Vertical Axis (Thick 3.8px White Border + Soft Shadow)</h1>
+  <div class="grid">
+
+    <!-- OPTION 1: Vertical Left Edge (Candidate C improved) -->
+    <div class="card">
+      <h2>1. Vertical Edge, Broad Head</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-1.8px, -1.8px);">
+          <svg style="width: 40px; height: 40px; overflow: visible; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)) drop-shadow(0 1.5px 3px rgba(0,0,0,0.3));" viewBox="0 0 40 40" fill="none">
+            <path d="M 1.8 1.8 L 1.8 30.5 C 1.8 31.2 2.4 31.6 3.0 31.1 L 10.5 24.2 L 18 37.5 C 18.4 38.2 19.3 38.4 20.0 38.0 L 25.0 35.5 C 25.7 35.1 26.0 34.2 25.6 33.5 L 18.2 20.2 L 28.5 20.2 C 29.3 20.2 29.7 19.4 29.1 18.8 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="7.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION 2: 12° Diagonal Tilt (Modern Custom Aesthetic) -->
+    <div class="card">
+      <h2>2. 12° Diagonal Tilt (Modern Chunky)</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2px, -2px);">
+          <svg style="width: 40px; height: 40px; overflow: visible; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)) drop-shadow(0 1.5px 3px rgba(0,0,0,0.3));" viewBox="0 0 40 40" fill="none">
+            <!-- Left edge tilted by 5px across 28px height (~10 deg) -->
+            <path d="M 2 2 L 7 29 C 7.2 29.7 7.9 30.0 8.5 29.5 L 14.5 24 L 20 37 C 20.4 37.7 21.3 37.9 22 37.5 L 27 35 C 27.7 34.6 28 33.7 27.6 33 L 22 20 L 31 22 C 31.8 22.2 32.4 21.5 32 20.8 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="7.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION 3: 20° Diagonal Tilt (Classic macOS/Figma Angle, Chunky Body) -->
+    <div class="card">
+      <h2>3. 20° Diagonal Tilt (Figma/macOS Angle)</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2.2px, -2.2px);">
+          <svg style="width: 40px; height: 40px; overflow: visible; filter: drop-shadow(0 4px 9px rgba(0,0,0,0.42)) drop-shadow(0 1.5px 3px rgba(0,0,0,0.3));" viewBox="0 0 40 40" fill="none">
+            <path d="M 2.2 2.2 L 10 30 C 10.3 30.7 11.1 30.9 11.7 30.4 L 17 25.5 L 21.5 37.5 C 21.9 38.2 22.8 38.4 23.5 38 L 28 35.5 C 28.7 35.1 29 34.2 28.6 33.5 L 24 21.5 L 32.5 25 C 33.3 25.3 34 24.5 33.6 23.8 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="7.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION 4: Delta Chevron from User Reference -->
+    <div class="card">
+      <h2>4. Reference Delta Chevron</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2.2px, -2.2px);">
+          <svg style="width: 40px; height: 40px; overflow: visible; filter: drop-shadow(0 4.5px 9px rgba(0,0,0,0.45)) drop-shadow(0 1.5px 3px rgba(0,0,0,0.3));" viewBox="0 0 40 40" fill="none">
+            <path d="M 2.2 2.2 L 9 32 C 9.3 32.8 10.2 33.1 10.9 32.6 L 19 26 L 31 31 C 31.8 31.4 32.7 30.8 32.5 30 L 2.2 2.2 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="7.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

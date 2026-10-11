@@ -1,0 +1,713 @@
+{
+  "timestamp": "2026-10-11 15:00:40",
+  "phase": "2.2",
+  "environment": {
+    "platform": "darwin",
+    "python_version": "3.12.12 (main, Feb  4 2026, 01:57:59) [Clang 21.1.4 ]",
+    "electron_cdp_url": "http://127.0.0.1:9222",
+    "agent_service_url": "http://127.0.0.1:8000",
+    "model_name": "ag/gemini-3.8-flash",
+    "model_proxy_url": "http://localhost:20128/v1"
+  },
+  "subsystems": {
+    "timestamp": "2026-10-11 14:56:30",
+    "environment": {
+      "platform": "darwin",
+      "python_version": "3.12.12 (main, Feb  4 2026, 01:57:59) [Clang 21.1.4 ]",
+      "graph_db_path": "/Users/pranavkumarn/.comex/graph.db",
+      "cdp_url": "http://127.0.0.1:9222"
+    },
+    "graph_memory": {
+      "search_memory": {
+        "ALL": {
+          "count": 30,
+          "mean": 186.88,
+          "p50": 185.58,
+          "p95": 190.65,
+          "p99": 209.52,
+          "min": 184.15,
+          "max": 209.52
+        },
+        "ENTITIES": {
+          "count": 30,
+          "mean": 4.75,
+          "p50": 4.71,
+          "p95": 5.18,
+          "p99": 5.28,
+          "min": 4.52,
+          "max": 5.28
+        },
+        "ARTIFACTS": {
+          "count": 30,
+          "mean": 3.17,
+          "p50": 3.14,
+          "p95": 3.51,
+          "p99": 3.52,
+          "min": 3.03,
+          "max": 3.52
+        },
+        "SKILLS": {
+          "count": 30,
+          "mean": 4.38,
+          "p50": 4.33,
+          "p95": 4.67,
+          "p99": 4.7,
+          "min": 4.21,
+          "max": 4.7
+        },
+        "USER": {
+          "count": 30,
+          "mean": 0.37,
+          "p50": 0.36,
+          "p95": 0.49,
+          "p99": 0.62,
+          "min": 0.33,
+          "max": 0.62
+        }
+      },
+      "find_recent_entities": {
+        "count": 30,
+        "mean": 0.25,
+        "p50": 0.24,
+        "p95": 0.32,
+        "p99": 0.38,
+        "min": 0.23,
+        "max": 0.38
+      },
+      "save_artifact": {
+        "count": 30,
+        "mean": 19.55,
+        "p50": 18.99,
+        "p95": 21.05,
+        "p99": 40.66,
+        "min": 16.08,
+        "max": 40.66
+      },
+      "get_artifact": {
+        "count": 30,
+        "mean": 0.43,
+        "p50": 0.41,
+        "p95": 0.62,
+        "p99": 0.64,
+        "min": 0.33,
+        "max": 0.64
+      },
+      "save_user_memory": {
+        "count": 30,
+        "mean": 19.77,
+        "p50": 19.79,
+        "p95": 23.94,
+        "p99": 28.2,
+        "min": 17.89,
+        "max": 28.2
+      },
+      "save_skill": {
+        "count": 30,
+        "mean": 21.1,
+        "p50": 20.95,
+        "p95": 22.02,
+        "p99": 35.91,
+        "min": 17.98,
+        "max": 35.91
+      }
+    },
+    "tool_service": {
+      "target_id": "F508C3B6EA3FAA8A06EEAF03149BBDB9",
+      "browser_navigate": {
+        "count": 30,
+        "mean": 518.72,
+        "p50": 515.28,
+        "p95": 519.17,
+        "p99": 626.25,
+        "min": 509.79,
+        "max": 626.25
+      },
+      "browser_inspect": {
+        "count": 30,
+        "mean": 2.19,
+        "p50": 1.99,
+        "p95": 2.6,
+        "p99": 6.26,
+        "min": 1.36,
+        "max": 6.26
+      },
+      "browser_click": {
+        "count": 30,
+        "mean": 102.5,
+        "p50": 105.17,
+        "p95": 108.66,
+        "p99": 110.22,
+        "min": 23.95,
+        "max": 110.22
+      },
+      "browser_type": {
+        "count": 30,
+        "mean": 108.99,
+        "p50": 107.98,
+        "p95": 116.95,
+        "p99": 118.41,
+        "min": 106.25,
+        "max": 118.41
+      },
+      "browser_extract": {
+        "count": 30,
+        "mean": 1.06,
+        "p50": 0.82,
+        "p95": 2.98,
+        "p99": 3.65,
+        "min": 0.73,
+        "max": 3.65
+      }
+    }
+  },
+  "nervous_system": {
+    "runtime": "Comex Electron (43.4.0)",
+    "cdp_url": "http://127.0.0.1:9222",
+    "target_id": "F508C3B6EA3FAA8A06EEAF03149BBDB9",
+    "duration_s": 193.31,
+    "unexpected_physical_dispatches": 0,
+    "latency_comparison": {
+      "stage_c": {
+        "p50": 7.18,
+        "p95": 9.06,
+        "p99": 9.56
+      },
+      "stage_d": {
+        "p50": 9.26,
+        "p95": 14.31,
+        "p99": 15.0
+      },
+      "stage_c_samples": [
+        7.41,
+        7.7,
+        8.77,
+        8.65,
+        6.83,
+        10.9,
+        7.56,
+        7.78,
+        7.47,
+        7.28
+      ],
+      "stage_d_samples": [
+        14.31,
+        8.69,
+        8.95,
+        13.07,
+        9.49,
+        8.42,
+        8.04,
+        8.83,
+        8.07,
+        7.95
+      ]
+    },
+    "summary": {
+      "Clean click": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 10.93,
+          "p95": 14.05,
+          "p99": 14.67
+        }
+      },
+      "Safe overlay dismissal": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 54.02,
+          "p95": 61.16,
+          "p99": 61.82
+        }
+      },
+      "Disabled overlay blocked": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 7.21,
+          "p95": 10.23,
+          "p99": 10.65
+        }
+      },
+      "Wrong-domain blocked": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 7.4,
+          "p95": 10.02,
+          "p99": 10.69
+        }
+      },
+      "Multiple overlays blocked": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 7.58,
+          "p95": 10.57,
+          "p99": 11.59
+        }
+      },
+      "Moving target blocked": {
+        "passed": 100,
+        "total": 100,
+        "percentiles": {
+          "p50": 52.85,
+          "p95": 58.32,
+          "p99": 59.19
+        }
+      },
+      "Subtree churn blocked": {
+        "passed": 100,
+        "total": 100,
+        "percentiles": {
+          "p50": 52.69,
+          "p95": 57.77,
+          "p99": 61.83
+        }
+      },
+      "Disappearing lifecycle": {
+        "passed": 50,
+        "total": 50,
+        "percentiles": {
+          "p50": 51.99,
+          "p95": 59.76,
+          "p99": 60.3
+        }
+      },
+      "TOCTOU race target": {
+        "passed": 100,
+        "total": 100,
+        "percentiles": {
+          "p50": 9.81,
+          "p95": 13.93,
+          "p99": 14.46
+        }
+      }
+    }
+  },
+  "browsergym": {
+    "total_tasks": 15,
+    "passed_tasks": 13,
+    "accuracy": 86.66666666666667,
+    "avg_duration_s": 12.0,
+    "p50_duration_s": 7.39,
+    "p95_duration_s": 40.33,
+    "tasks": [
+      {
+        "task_id": "T01",
+        "name": "click-test",
+        "category": "Button Click",
+        "goal": "Click the button.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "1"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Button with text 'Click Me!' has bid '1'. Goal requires clicking it."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 5.33,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T02",
+        "name": "click-button",
+        "category": "Button Click",
+        "goal": "Click on the \"no\" button.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "5"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Button with text 'no' has bid '5'. Click it to fulfill the goal."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.94,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T03",
+        "name": "click-button-sequence",
+        "category": "Multi-Step Click",
+        "goal": "Click button ONE, then click button TWO.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "1"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Button ONE has bid 1. Button TWO has bid 2. Click both sequentially to satisfy the goal."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 6.47,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T04",
+        "name": "enter-text",
+        "category": "Text Input",
+        "goal": "Enter \"Kanesha\" into the text field and press Submit.",
+        "actions": [
+          {
+            "action": "fill",
+            "bid": "1",
+            "text": "Kanesha"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Fill text input with 'Kanesha' and click the submit button to complete the goal."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 14.73,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T05",
+        "name": "enter-text-dynamic",
+        "category": "Text Input",
+        "goal": "Enter \"f168\" into the text field and press Submit.",
+        "actions": [
+          {
+            "action": "fill",
+            "bid": "1",
+            "text": "f168"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Text field has bid 1. Submit button has bid 2. Fill bid 1 with f168 then click bid 2 to submit."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.57,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T06",
+        "name": "focus-text",
+        "category": "Input Focus",
+        "goal": "Focus into the textbox.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "1"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Target element is the text input with bid '1'. Emit click action to focus."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 6.55,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T07",
+        "name": "click-checkboxes",
+        "category": "Checkbox Selection",
+        "goal": "Select P5NWV, 0umFq, hKQbXO and click Submit.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "2"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          },
+          {
+            "action": "click",
+            "bid": "6"
+          },
+          {
+            "action": "click",
+            "bid": "11"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Select checkboxes for P5NWV (bid 2), 0umFq (bid 4), and hKQbXO (bid 6), then click Submit (bid 11)."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 8.46,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T08",
+        "name": "choose-list",
+        "category": "Dropdown Select",
+        "goal": "Select El Salvador from the list and click Submit.",
+        "actions": [
+          {
+            "action": "select_option",
+            "bid": "1",
+            "option": "El Salvador"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Select El Salvador in the dropdown bid 1, then click submit button bid 2."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.11,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T09",
+        "name": "click-dialog",
+        "category": "Modal Dialog",
+        "goal": "Close the dialog box by clicking the \"x\".",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "1"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: The button with bid '1' has the text 'Close' to dismiss the dialog box."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 6.35,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T10",
+        "name": "login-user",
+        "category": "Form Submission",
+        "goal": "Enter the username \"chas\" and the password \"bXl8N\" into the text fields and press login.",
+        "actions": [
+          {
+            "action": "fill",
+            "bid": "2",
+            "text": "chas"
+          },
+          {
+            "action": "fill",
+            "bid": "4",
+            "text": "bXl8N"
+          },
+          {
+            "action": "click",
+            "bid": "5"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Fill username into input element 2, fill password into input element 4, and click login button 5 to authenticate."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.39,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T11",
+        "name": "search-engine",
+        "category": "Search & Navigate",
+        "goal": "Use the textbox to enter \"Rex\" and press \"Search\", then find and click the 2nd search result.",
+        "actions": [
+          {
+            "action": "fill",
+            "bid": "1",
+            "text": "Rex"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Enter 'Rex' into the search input and click the search button to generate results.",
+          "Turn 2: The search has already been executed. The second search result corresponds to bid 4 with text 'Rex'."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 14.2,
+        "turns_taken": 2
+      },
+      {
+        "task_id": "T12",
+        "name": "click-collapsible",
+        "category": "Hierarchy & Toggle",
+        "goal": "Expand the section below and click submit.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "1"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Expand the section by clicking the header element, then click the submit button."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.17,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T13",
+        "name": "click-option",
+        "category": "Radio / Option",
+        "goal": "Select 6dtdE4S and click Submit.",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "2"
+          },
+          {
+            "action": "click",
+            "bid": "9"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Radio button for 6dtdE4S is bid 2. Submit button is bid 9. Click bid 2, then click bid 9."
+        ],
+        "success": true,
+        "reward": 1.0,
+        "reason": null,
+        "duration_s": 7.21,
+        "turns_taken": 1
+      },
+      {
+        "task_id": "T14",
+        "name": "email-inbox",
+        "category": "Complex List Selection",
+        "goal": "Find the email by Rena and reply to them with the text \"Vitae.\".",
+        "actions": [
+          {
+            "action": "click",
+            "bid": "13"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          },
+          {
+            "action": "click",
+            "bid": "2"
+          },
+          {
+            "action": "click",
+            "bid": "1"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Email from Rena found at bid 13. Click to open.",
+          "Turn 2: Email opened. Click Reply button to open message editor.",
+          "Turn 3: Reply button is present. Click bid 2 to open the reply composer.",
+          "Turn 4: Clicking element 2 failed to open the reply composer across previous turns. Element 1 is the toolbar reply action button at (119, 63). Clicking element 1 to open the reply editor."
+        ],
+        "success": false,
+        "reward": 0.0,
+        "reason": null,
+        "duration_s": 40.33,
+        "turns_taken": 4
+      },
+      {
+        "task_id": "T15",
+        "name": "book-flight",
+        "category": "Complex Multi-Field Form",
+        "goal": "Book the shortest one-way flight from: Crescent City, CA to: MIA on 11/06/2016.",
+        "actions": [
+          {
+            "action": "fill",
+            "bid": "1",
+            "text": "Crescent City, CA"
+          },
+          {
+            "action": "fill",
+            "bid": "2",
+            "text": "MIA"
+          },
+          {
+            "action": "fill",
+            "bid": "3",
+            "text": "11/06/2016"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          },
+          {
+            "action": "click",
+            "bid": "12"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          },
+          {
+            "action": "fill",
+            "bid": "3",
+            "text": "11/06/2016"
+          },
+          {
+            "action": "click",
+            "bid": "4"
+          }
+        ],
+        "thoughts": [
+          "Turn 1: Enter origin, destination, and departure date, then submit search.",
+          "Turn 2: Datepicker overlay is open after filling date. Click Search button again to submit search query.",
+          "Turn 3: Datepicker popup is open. Click day 6 to confirm date selection and close calendar, then click Search.",
+          "Turn 4: Date input contains 12/06/2016 instead of 11/06/2016. Fill datepicker with 11/06/2016 and click search."
+        ],
+        "success": false,
+        "reward": 0.0,
+        "reason": null,
+        "duration_s": 33.25,
+        "turns_taken": 4
+      }
+    ]
+  },
+  "agent_e2e": {}
+}

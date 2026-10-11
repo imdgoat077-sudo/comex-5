@@ -101,7 +101,7 @@ async def test_graph_write_failure_warning_logs(caplog):
          mock.patch("agent_service.graph_store", failing_store):
         
         # Run agent loop, expect write failure warning logs without throwing
-        res = await agent_service.execute_agent_loop("Write fail test", "http://127.0.0.1:9222")
+        res = await agent_service.execute_agent_loop("Write fail test", "http://127.0.0.1:9222", trusted_app_context=True)
         assert res == "Finished."
 
         warning_logs = [rec.message for rec in caplog.records if rec.levelname == "WARNING"]

@@ -62,7 +62,7 @@ async def test_save_artifact_missing_title_does_not_crash_loop(mock_llm_class, f
     _make_mock_llm_class(mock_llm_class, bad_call, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Do research.", "ws://dummy")
+        result = await execute_agent_loop("Do research.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -112,7 +112,7 @@ async def test_save_artifact_valid_call_still_succeeds(mock_llm_class, fresh_sto
     _make_mock_llm_class(mock_llm_class, good_call, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Save my research.", "ws://dummy")
+        result = await execute_agent_loop("Save my research.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -152,7 +152,7 @@ async def test_search_memory_missing_query_does_not_crash_loop(mock_llm_class, f
     _make_mock_llm_class(mock_llm_class, bad_call, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Search memory.", "ws://dummy")
+        result = await execute_agent_loop("Search memory.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -197,7 +197,7 @@ async def test_read_artifact_missing_artifact_id_does_not_crash_loop(mock_llm_cl
     _make_mock_llm_class(mock_llm_class, bad_call, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Read artifact.", "ws://dummy")
+        result = await execute_agent_loop("Read artifact.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 

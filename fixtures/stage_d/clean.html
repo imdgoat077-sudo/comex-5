@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clean Test Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; }
+    #real-target { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Stage D Deterministic Fixture: Clean Page</h1>
+  <button id="real-target">Click me</button>
+  <div id="status" style="margin-top: 20px;">Ready</div>
+
+  <script>
+    window.__real_clicks = 0;
+    const target = document.getElementById('real-target');
+    const status = document.getElementById('status');
+    target.addEventListener('click', () => {
+      window.__real_clicks++;
+      status.textContent = `Clicked ${window.__real_clicks} times`;
+    });
+  </script>
+</body>
+</html>

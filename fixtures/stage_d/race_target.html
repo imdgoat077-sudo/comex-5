@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Race Condition Target Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; }
+    #container { margin-top: 20px; }
+    #race-target { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Race Condition Target Fixture</h1>
+  <div id="container">
+    <button id="race-target" data-target-uid="uid_0">Race Target Initial</button>
+  </div>
+  <div id="status" style="margin-top: 20px;">Ready</div>
+
+  <script>
+    window.__race_clicks = 0;
+    window.__last_clicked_uid = null;
+    window.__clicked_uids = [];
+    let tick = 0;
+
+    function attachClickListener(el) {
+      el.addEventListener('click', () => {
+        window.__race_clicks++;
+        window.__last_clicked_uid = el.dataset.targetUid;
+        window.__clicked_uids.push(el.dataset.targetUid);
+        document.getElementById('status').textContent = `Clicked: ${el.dataset.targetUid} (${window.__race_clicks})`;
+      });
+    }
+
+    attachClickListener(document.getElementById('race-target'));
+
+    // High frequency DOM churn / node replacement
+    setInterval(() => {
+      tick++;
+      const container = document.getElementById('container');
+      const current = document.getElementById('race-target');
+      if (!container || !current) return;
+
+      const action = tick % 3;
+      if (action === 0) {
+        // Replace element completely (new nodeId & backendNodeId)
+        const replacement = document.createElement('button');
+        replacement.id = 'race-target';
+        replacement.dataset.targetUid = `uid_${tick}`;
+        replacement.textContent = `Replaced Node ${tick}`;
+        attachClickListener(replacement);
+        current.replaceWith(replacement);
+      } else if (action === 1) {
+        // Geometric position change
+        current.style.transform = `translateX(${(tick * 8) % 80}px)`;
+      } else {
+        // Subtree mutation
+        current.innerHTML = `Mutating <span>${Date.now()}</span>`;
+      }
+    }, 20);
+  </script>
+</body>
+</html>

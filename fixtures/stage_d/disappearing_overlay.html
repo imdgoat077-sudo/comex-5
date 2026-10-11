@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Disappearing Overlay Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; position: relative; }
+    #cookie-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+    }
+    #cookie-accept {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #real-target { padding: 12px 24px; font-size: 16px; cursor: pointer; margin-top: 80px; }
+  </style>
+</head>
+<body>
+  <div id="cookie-overlay">
+    <div>Dismissable Overlay for State Cycle Verification</div>
+    <button id="cookie-accept">Dismiss Overlay</button>
+  </div>
+
+  <h1>Underlying Application</h1>
+  <button id="real-target">Real Target Button</button>
+  <div id="status">Overlay Active</div>
+
+  <script>
+    window.__real_clicks = 0;
+    window.__dismiss_clicks = 0;
+
+    const overlay = document.getElementById('cookie-overlay');
+    const dismissBtn = document.getElementById('cookie-accept');
+    const realBtn = document.getElementById('real-target');
+    const status = document.getElementById('status');
+
+    dismissBtn.addEventListener('click', () => {
+      window.__dismiss_clicks++;
+      overlay.remove();
+      status.textContent = "Overlay Removed";
+    });
+
+    realBtn.addEventListener('click', () => {
+      window.__real_clicks++;
+      status.textContent = `Target Clicked: ${window.__real_clicks}`;
+    });
+  </script>
+</body>
+</html>

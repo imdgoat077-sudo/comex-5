@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Disabled Overlay Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; position: relative; }
+    #disabled-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(185, 28, 28, 0.95);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+    }
+    #disabled-accept {
+      background: #7f1d1d;
+      color: white;
+      border: 1px solid white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #real-target { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="disabled-overlay">
+    <div><strong>Blocked Notice:</strong> This overlay has a disabled or unsafe policy.</div>
+    <button id="disabled-accept">Close Notice</button>
+  </div>
+
+  <h1>Underlying Application</h1>
+  <button id="real-target">Real Target Button</button>
+  <div id="status">Status: Normal</div>
+
+  <script>
+    window.__real_clicks = 0;
+    window.__dismiss_clicks = 0;
+
+    document.getElementById('disabled-accept').addEventListener('click', () => {
+      window.__dismiss_clicks++;
+    });
+    document.getElementById('real-target').addEventListener('click', () => {
+      window.__real_clicks++;
+    });
+  </script>
+</body>
+</html>

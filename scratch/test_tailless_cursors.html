@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  h1 { font-size: 18px; margin-bottom: 20px; font-weight: 600; color: #f8fafc; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #334155;
+  }
+  .card h2 { font-size: 13px; margin: 0 0 10px 0; color: #cbd5e1; }
+  .canvas {
+    background: #ffffff;
+    height: 180px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background-image: 
+      radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .target-crosshair {
+    position: absolute;
+    left: 80px;
+    top: 60px;
+    width: 1px;
+    height: 30px;
+    background: #ef4444;
+    transform: translateY(-15px);
+    z-index: 200;
+  }
+  .target-crosshair-h {
+    position: absolute;
+    left: 80px;
+    top: 60px;
+    width: 30px;
+    height: 1px;
+    background: #ef4444;
+    transform: translateX(-15px);
+    z-index: 200;
+  }
+  .target-dot {
+    position: absolute;
+    left: 80px;
+    top: 60px;
+    width: 4px;
+    height: 4px;
+    background: #ef4444;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 210;
+  }
+  .ripple-preview {
+    position: absolute;
+    left: 80px;
+    top: 60px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    transform: translate(-50%, -50%);
+    z-index: 90;
+  }
+  .cursor-box {
+    position: absolute;
+    left: 80px;
+    top: 60px;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+  <h1>Tailless Rounded Mouse Pointer Variations (Without Tail, Beautiful & Elegant)</h1>
+  <div class="grid">
+
+    <!-- VARIATION 1: Elegant Delta Chevron (Smooth bezier notch and wings) -->
+    <div class="card">
+      <h2>1. Smooth Delta Chevron</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2px, -2px);">
+          <svg style="width: 38px; height: 38px; overflow: visible; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.42)) drop-shadow(0 1.5px 3px rgba(0,0,0,0.28));" viewBox="0 0 38 38" fill="none">
+            <!-- Path without tail: tip at (2, 2), left wing at (8, 32), notch at (18, 24), right wing at (32, 18) -->
+            <path d="M 2 2 
+                     L 8.5 32 
+                     C 8.8 33 9.8 33.3 10.6 32.7 
+                     L 18.5 25 
+                     L 29.5 29 
+                     C 30.4 29.3 31.2 28.6 31 27.7 
+                     L 2 2 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="6"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIATION 2: Symmetrical Rounded Chevron (Exact Match to User Reference Photo) -->
+    <div class="card">
+      <h2>2. Reference Exact (Pillowy Rounded Chevron)</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2.2px, -2.2px);">
+          <svg style="width: 38px; height: 38px; overflow: visible; filter: drop-shadow(0 5px 12px rgba(0,0,0,0.45)) drop-shadow(0 1.5px 4px rgba(0,0,0,0.3));" viewBox="0 0 38 38" fill="none">
+            <!-- Pure chevron from photo: rounded tip, rounded wings, smooth inner V -->
+            <path d="M 2.2 2.2 
+                     L 9.5 31.5 
+                     C 10 32.5 11.2 32.8 12 32.1 
+                     L 19.5 24.5 
+                     L 29.5 24.5 
+                     C 30.5 24.5 31.2 23.6 30.8 22.7 
+                     L 2.2 2.2 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="6.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIATION 3: Ultra-Clean Rounded Aerodynamic Pointer -->
+    <div class="card">
+      <h2>3. Modern Aerodynamic Dart</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-1.8px, -1.8px);">
+          <svg style="width: 38px; height: 38px; overflow: visible; filter: drop-shadow(0 4.5px 10px rgba(0,0,0,0.45)) drop-shadow(0 1px 3px rgba(0,0,0,0.3));" viewBox="0 0 38 38" fill="none">
+            <!-- Diagonal symmetrical dart, 45 degree axis -->
+            <path d="M 1.8 1.8 
+                     L 9 32 
+                     C 9.4 33 10.5 33.3 11.3 32.6 
+                     L 18 25 
+                     L 28 28 
+                     C 28.9 28.3 29.7 27.6 29.4 26.7 
+                     L 1.8 1.8 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="7"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIATION 4: Smooth Concave Back (Curved Arch Notch) -->
+    <div class="card">
+      <h2>4. Soft Concave Arch (Pillowy Back)</h2>
+      <div class="canvas">
+        <div class="target-crosshair"></div>
+        <div class="target-crosshair-h"></div>
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box" style="transform: translate(-2px, -2px);">
+          <svg style="width: 38px; height: 38px; overflow: visible; filter: drop-shadow(0 5px 11px rgba(0,0,0,0.42)) drop-shadow(0 1.5px 3.5px rgba(0,0,0,0.28));" viewBox="0 0 38 38" fill="none">
+            <!-- Smooth curved arch back without sharp V -->
+            <path d="M 2 2 
+                     L 8.5 31.5 
+                     C 9.0 32.5 10.2 32.8 11.0 32.2 
+                     Q 18 26.5 28 27 
+                     C 29.0 27 29.7 26.1 29.3 25.2 
+                     L 2 2 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="6.8"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -28,7 +28,7 @@ Comex is an AI-augmented desktop browser combining an **Electron** native shell,
 ┌────────────────────────────────────▼────────────────────────────────────┐
 │ Python Agent Service (agent_service.py)                                 │
 │   ├── FastAPI running on port 8000                                      │
-│   ├── LLM: ChatOpenAI (ag/gemini-3.7-flash-medium via 9Router proxy)   │
+│   ├── LLM: ChatOpenAI (ag/gemini-3.8-flash via 9Router proxy)          │
 │   ├── CDP Orchestration: browser-harness (~/.local/bin/browser-harness) │
 │   └── Graph Memory: Embedded Kuzu DB (~/.comex/graph.db)                │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -96,7 +96,7 @@ Comex is an AI-augmented desktop browser combining an **Electron** native shell,
 - **CDP Routing**: Resolves target CDP WebSocket URL by querying `${CDP_URL}/json/list` and matching `tabId` in target URLs.
 - **LLM Configuration**:
   - `OPENAI_BASE_URL=http://localhost:20128/v1` (9Router proxy)
-  - `MODEL_NAME=ag/gemini-3.7-flash-medium`
+  - `MODEL_NAME=ag/gemini-3.8-flash`
   - Max agent loop steps: `100`
 
 ### 3.4 Tools Provided to Agent Loop

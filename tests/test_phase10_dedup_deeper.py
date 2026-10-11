@@ -53,7 +53,7 @@ async def test_dedup_deeper_retrieval(temp_db_dir):
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm), \
              mock.patch("subprocess.run", return_value=mock_run):
-            await agent_service.execute_agent_loop("previously, find the project specification", "http://127.0.0.1:9222")
+            await agent_service.execute_agent_loop("previously, find the project specification", "http://127.0.0.1:9222", legacy_mode=True)
             
             print("Tool Response:", tool_response)
             assert "THERE_IS_A_UNIQUE_SECRET_SENTINEL" in tool_response

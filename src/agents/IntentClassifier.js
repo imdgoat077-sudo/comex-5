@@ -10,7 +10,7 @@
 
 const ROUTER_API_KEY = import.meta.env.VITE_ROUTER_API_KEY || '';
 const OPENAI_BASE_URL = import.meta.env.VITE_OPENAI_BASE_URL || 'http://localhost:20128/v1';
-const MODEL_NAME = import.meta.env.VITE_MODEL_NAME || 'ag/gemini-3.7-flash-medium';
+const MODEL_NAME = import.meta.env.VITE_MODEL_NAME || 'ag/gemini-3.8-flash';
 
 export async function classifyIntent(prompt) {
   const systemPrompt = `

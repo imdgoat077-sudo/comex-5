@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+      body { margin: 0; padding: 40px; background: #f8fafc; font-family: -apple-system, sans-serif; }
+      .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+      .logo { font-size: 20px; font-weight: 700; color: #0f172a; }
+      .nav { display: flex; gap: 20px; }
+      .nav a { color: #64748b; text-decoration: none; font-size: 14px; }
+      .hero { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 36px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+      h1 { font-size: 28px; margin: 0 0 12px 0; color: #0f172a; }
+      p { font-size: 15px; color: #64748b; margin: 0 0 24px 0; line-height: 1.5; }
+      .btn-primary { padding: 12px 28px; background: #2563eb; color: white; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+      .btn-secondary { padding: 12px 28px; background: #f1f5f9; color: #334155; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 15px; font-weight: 600; margin-left: 12px; }
+      .cursor-test { position: absolute; left: 165px; top: 220px; z-index: 1000; }
+      .ripple-test {
+        position: absolute; left: 165px; top: 220px; width: 14px; height: 14px; border-radius: 50%;
+        border: 2px solid #38bdf8; background: rgba(56, 189, 248, 0.25); box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+        transform: translate(-50%, -50%) scale(2.2);
+      }
+    </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo">Acme Analytics</div>
+        <div class="nav"><a href="#">Overview</a><a href="#">Features</a><a href="#">Pricing</a><a href="#">Sign In</a></div>
+      </div>
+      <div class="hero">
+        <h1>The modern intelligence platform</h1>
+        <p>Accelerate your business with autonomous web research and graph-powered memory insights.</p>
+        <button class="btn-primary" id="cta">Get Started Free</button>
+        <button class="btn-secondary">Book Demo</button>
+      </div>
+      
+      <div class="ripple-test"></div>
+      <div class="cursor-test">
+        <svg style="width: 35px; height: 35px; overflow: visible; filter: drop-shadow(0 3.5px 8px rgba(0,0,0,0.42)) drop-shadow(0 1px 3px rgba(0,0,0,0.25));" viewBox="-1.09 -1.09 35 35" fill="none">
+          <path d="M 0.5 0.5 L 11.5 26.5 C 12.3 28 14 28.2 15.3 27 L 18.2 18.2 L 27 15.3 C 28.2 14 28 12.3 26.5 11.5 Z"
+                fill="#000000" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" style="paint-order: stroke fill;"/>
+        </svg>
+      </div>
+    </body>
+    </html>

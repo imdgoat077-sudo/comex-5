@@ -33,7 +33,7 @@
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │ 3. Python Agent Service (agent_service.py)                             │
 │   ├── FastAPI running on port 8000                                     │
-│   ├── LLM: ChatOpenAI (ag/gemini-3.7-flash-medium via 9Router proxy)   │
+│   ├── LLM: ChatOpenAI (ag/gemini-3.8-flash via 9Router proxy)          │
 │   ├── Subprocess: browser-harness (~/.local/bin/browser-harness)       │
 │   └── Graph Memory: Embedded Kuzu DB (~/.comex/graph.db)               │
 └────────────────────────────────────────────────────────────────────────┘
@@ -41,7 +41,7 @@
 
 * **CDP Remote Debugging**: `http://127.0.0.1:9222` (launched via `app.commandLine.appendSwitch('remote-debugging-port', '9222')`).
 * **Python Agent API**: `http://127.0.0.1:8000`.
-* **LLM Proxy (9Router)**: `http://localhost:20128/v1` (OpenAI-compatible API format, model `ag/gemini-3.7-flash-medium`).
+* **LLM Proxy (9Router)**: `http://localhost:20128/v1` (OpenAI-compatible API format, model `ag/gemini-3.8-flash`).
 * **React Dev Server**: `http://localhost:5173` (Vite).
 * **Graph Database**: Embedded Kuzu DB files at `~/.comex/graph.db`.
 
@@ -307,6 +307,22 @@ All Kuzu calls in [AgentGraphStore](file:///Users/pranavkumarn/Documents/Comex%2
 - **Phases 12–14 (Procedural Gating & Induction Findings)**:
   - Phase 14 conducted a 54-run replication study testing procedural memory transfer across three tasks: Overlay Bypass, Inner Container Scroll, and Hover Reveal.
   - **Key Finding**: While LLM gating prevented 100% of mismatched injections, procedural injection yielded **no reproducible benefit** over zero-shot baselines. The latency overhead of retrieval and gating (~5 seconds) outweighed any minor tool-call reductions.
+- **Phase 2.1D (ComexToolService Migration, Authority Hardening & Scope Bounds)**:
+  - Migrated browser tools (click, type, navigate, extract, inspect) and graph tools (`search_memory`, `save_artifact`, `read_artifact`) to authoritative `ComexToolService` with native async execution.
+  - Preflight fail-closed propagation: `/agent/run` and `/agent/run/stream` explicitly return/emit `success=False` with error payload on preflight halts.
+  - Authority invariant: Single-agent context trust derives strictly from verified `trusted_app_context`; missing worker credentials never grant implicit trust.
+  - Graph agent lifecycle: `create_agent` deferred until after service and context preflight checks succeed; early halts never leave orphaned records.
+  - Memory search completeness: preserved evidence (`truncated`, `omitted_count`, `partial_failure`, `failed_domains`) and user-facing warning notices in tool return.
+  - Telemetry error classification: authoritatively detects all uppercase bracketed error codes (`r"^\[[A-Z0-9_]+\]"`) and memory write failure prefixes (`Failed to save user memory:`, `Failed to save skill:`).
+  - Cursor notification hardening: `/agent/cursor/notify` scopes context tokens to matching `target_tab_id` and permitted actions; CDP target discovery uses strict origin/path checks.
+  - Sync artifact write timeout: surfaces explicit `[OPERATION_TIMEOUT]` with outcome unknown notice.
+- **Phase 2.2 (Performance Benchmarking Baseline)**:
+  - Established empirical baseline across Graph Memory, Tool Execution Service, Behavioral Nervous System, BrowserGym Multi-Turn Battery, and End-to-End Agent Loop.
+  - **Latency Distribution**: LLM reasoning turns account for **94.7%** of end-to-end task duration (~3,600ms P50 per turn, ~11.8s for 3-turn task). CDP navigation takes ~515ms P50, Method E click dispatch takes ~105ms P50 (including 85ms quiescence window), raw DOM inspect/extract takes 1–2ms, and graph memory queries take 3–5ms per domain (0.24ms for entity lookups).
+  - **Graph Search Bottleneck**: `search_memory(ALL)` takes ~185ms P50 due to 5 sequential Cypher queries across each node table's FTS index; domain-specific queries execute in 3–5ms.
+  - **Nervous System Overhead**: Autonomic overlay matching adds only **+2.08ms P50** net overhead over baseline clean clicks (9.26ms vs 7.18ms), with 100% barrier integrity (zero unexpected physical dispatches across 650 live operations).
+  - **BrowserGym Accuracy**: Achieved **86.7% (13/15)** accuracy on MiniWoB++ benchmark battery inside live Electron shell (P50 duration 7.39s).
+  - Benchmark reports and raw trial summaries saved to `benchmarks/phase2_2_performance_baseline_report.md` and `benchmarks/phase2_2_benchmark_summary.json`.
 
 ---
 

@@ -249,7 +249,7 @@ async def test_prompt_injection_boundary(fresh_store):
             
         mock_llm.ainvoke.side_effect = side_effect
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm):
-            await agent_service.execute_agent_loop("What did you find previously adversarial?", "http://127.0.0.1")
+            await agent_service.execute_agent_loop("What did you find previously adversarial?", "http://127.0.0.1", trusted_app_context=True)
 
 # E2E Tests (similar to phase 9)
 @pytest.mark.asyncio
@@ -280,7 +280,7 @@ async def test_e2e_auto_context(temp_db_dir):
         mock_llm_a.ainvoke.side_effect = side_effect_a
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm_a), mock.patch("subprocess.run", return_value=mock_run_a):
-            await agent_service.execute_agent_loop("Save this.", "http://1")
+            await agent_service.execute_agent_loop("Save this.", "http://1", legacy_mode=True)
             
         # TASK B
         mock_run_b = mock.MagicMock(side_effect=Exception("Browser must not be called!"))
@@ -301,7 +301,7 @@ async def test_e2e_auto_context(temp_db_dir):
         mock_llm_b.ainvoke.side_effect = side_effect_b
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm_b), mock.patch("subprocess.run", return_value=mock_run_b):
-            res = await agent_service.execute_agent_loop("What did you find previously in Phase 10?", "http://1")
+            res = await agent_service.execute_agent_loop("What did you find previously in Phase 10?", "http://1", legacy_mode=True)
             assert "PHASE10_SENTINEL" in res
 
 @pytest.mark.asyncio
@@ -325,7 +325,7 @@ async def test_adversarial_retrieval_auto_context(temp_db_dir):
         mock_llm.ainvoke.side_effect = side_effect
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm):
-            res = await agent_service.execute_agent_loop("What did you find previously about the Real Answer?", "http://1")
+            res = await agent_service.execute_agent_loop("What did you find previously about the Real Answer?", "http://1", trusted_app_context=True)
             assert "Retrieved Memory A." in res
 
 @pytest.mark.asyncio

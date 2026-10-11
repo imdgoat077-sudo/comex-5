@@ -1,0 +1,123 @@
+{
+  "duration_s": 25.84,
+  "unexpected_physical_dispatches": 0,
+  "latency_comparison": {
+    "stage_c": {
+      "p50": 1.98,
+      "p95": 3.08,
+      "p99": 4.36
+    },
+    "stage_d": {
+      "p50": 3.61,
+      "p95": 7.76,
+      "p99": 15.2
+    },
+    "stage_c_samples": [
+      2.01,
+      2.69,
+      2.13,
+      2.02,
+      1.82,
+      1.88,
+      1.85,
+      2.95,
+      2.06,
+      2.03
+    ],
+    "stage_d_samples": [
+      3.24,
+      4.57,
+      2.95,
+      2.97,
+      4.16,
+      2.96,
+      2.94,
+      11.71,
+      2.96,
+      3.68
+    ]
+  },
+  "summary": {
+    "Clean click": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 3.82,
+        "p95": 8.81,
+        "p99": 9.14
+      }
+    },
+    "Safe overlay dismissal": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 4.21,
+        "p95": 8.69,
+        "p99": 10.28
+      }
+    },
+    "Disabled overlay blocked": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 3.55,
+        "p95": 7.65,
+        "p99": 8.19
+      }
+    },
+    "Wrong-domain blocked": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 4.05,
+        "p95": 7.78,
+        "p99": 7.8
+      }
+    },
+    "Multiple overlays blocked": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 3.64,
+        "p95": 7.4,
+        "p99": 8.17
+      }
+    },
+    "Moving target blocked": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 4.65,
+        "p95": 5.07,
+        "p99": 5.12
+      }
+    },
+    "Subtree churn blocked": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 4.39,
+        "p95": 5.0,
+        "p99": 5.77
+      }
+    },
+    "Disappearing lifecycle": {
+      "passed": 0,
+      "total": 50,
+      "percentiles": {
+        "p50": 4.1,
+        "p95": 8.88,
+        "p99": 9.98
+      }
+    },
+    "TOCTOU race target": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 3.79,
+        "p95": 7.03,
+        "p99": 9.9
+      }
+    }
+  }
+}

@@ -79,7 +79,7 @@ Recap of the existing architecture this plan integrates into:
   `VISIBLE_BROWSER_TASK` (foreground tab).
 - **Python agent backend** (`agent_service.py`): FastAPI on `localhost:8000`.
   Runs `execute_agent_loop(task, default_cdp_url)` — a LangChain
-  `ChatOpenAI` loop (model `ag/gemini-3.7-flash-medium`, via local proxy at
+  `ChatOpenAI` loop (model `ag/gemini-3.8-flash`, via local proxy at
   `localhost:20128/v1`), up to 100 steps, with two existing tools:
   - `run_browser_harness(code, target_tab_ws)` — executes LLM-generated
     Python against a CDP target via `browser-harness`.

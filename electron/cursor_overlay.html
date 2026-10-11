@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Comex Visual Cursor Overlay</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent !important;
+      pointer-events: none;
+    }
+    #cursor-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 35px;
+      height: 35px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(-100px, -100px, 0);
+      transition: opacity 120ms ease-out;
+      will-change: transform, opacity;
+      z-index: 2147483647;
+    }
+    .cursor-svg {
+      width: 35px;
+      height: 35px;
+      display: block;
+      overflow: visible;
+      /* Soft premium drop shadow for depth and contrast against any webpage */
+      filter: drop-shadow(0 3.5px 8px rgba(0, 0, 0, 0.42)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+      transform-origin: 0 0;
+      transition: transform 60ms ease-out;
+    }
+    .cursor-depressed {
+      transform: scale(0.90);
+    }
+    .ripple {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.6);
+      opacity: 1;
+      animation: ripple-expand 180ms ease-out forwards;
+    }
+    @keyframes ripple-expand {
+      0% {
+        transform: translate(-50%, -50%) scale(0.6);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(3.5);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="cursor-container">
+    <!-- Premium symmetric tailless mouse pointer with rounded top apex, thinned base & rounded borders: authoritative tip at (0, 0) -->
+    <svg class="cursor-svg" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 2.5 5.2 
+               C 1.4 2.8 2.8 1.4 5.2 2.5 
+               L 26.5 11.5 
+               C 28 12.3 28.2 14 27 15.3 
+               L 18.2 18.2 
+               L 15.3 27 
+               C 14 28.2 12.3 28 11.5 26.5 
+               Z"
+            fill="#000000"
+            stroke="#ffffff"
+            stroke-width="4.4"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+            style="paint-order: stroke fill;"/>
+    </svg>
+  </div>
+
+  <script>
+    const container = document.getElementById('cursor-container');
+    const svg = container.querySelector('.cursor-svg');
+
+    let currentX = -100;
+    let currentY = -100;
+    let startX = -100;
+    let startY = -100;
+    let targetX = -100;
+    let targetY = -100;
+    let animStartTime = 0;
+    let isAnimating = false;
+    let isVisible = false;
+    const DURATION_MS = 200; // Snappy, natural 200ms glide
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function createRipple(x, y) {
+      const existingRipples = document.querySelectorAll('.ripple');
+      if (existingRipples.length >= 3) {
+        for (let i = 0; i < existingRipples.length - 2; i++) {
+          existingRipples[i].remove();
+        }
+      }
+
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      document.body.appendChild(ripple);
+
+      svg.classList.add('cursor-depressed');
+      setTimeout(() => svg.classList.remove('cursor-depressed'), 80);
+
+      setTimeout(() => {
+        if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+      }, 200);
+    }
+
+    function stepAnimation(timestamp) {
+      if (!isAnimating) return;
+      if (!animStartTime) animStartTime = timestamp;
+
+      const elapsed = timestamp - animStartTime;
+      const progress = Math.min(1.0, elapsed / DURATION_MS);
+      const eased = easeOutCubic(progress);
+
+      currentX = startX + (targetX - startX) * eased;
+      currentY = startY + (targetY - startY) * eased;
+
+      container.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+
+      if (progress < 1.0) {
+        requestAnimationFrame(stepAnimation);
+      } else {
+        isAnimating = false;
+        currentX = targetX;
+        currentY = targetY;
+        container.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
+        createRipple(targetX, targetY);
+      }
+    }
+
+    if (window.cursorNative) {
+      window.cursorNative.onAnimate((data) => {
+        const x = typeof data.x === 'number' ? data.x : 0;
+        const y = typeof data.y === 'number' ? data.y : 0;
+
+        targetX = x;
+        targetY = y;
+        container.style.opacity = '1';
+        isVisible = true;
+
+        if (startX === -100 && startY === -100) {
+          startX = targetX - 35;
+          startY = targetY - 35;
+          currentX = startX;
+          currentY = startY;
+          container.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        } else {
+          startX = currentX;
+          startY = currentY;
+        }
+
+        animStartTime = 0;
+        isAnimating = true;
+        requestAnimationFrame(stepAnimation);
+      });
+
+      window.cursorNative.onReset(() => {
+        isAnimating = false;
+        isVisible = false;
+        container.style.opacity = '0';
+        document.querySelectorAll('.ripple').forEach(r => r.remove());
+      });
+    }
+  </script>
+</body>
+</html>

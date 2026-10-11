@@ -1,0 +1,126 @@
+{
+  "runtime": "Comex Electron (43.4.0)",
+  "cdp_url": "http://127.0.0.1:9222",
+  "target_id": "F508C3B6EA3FAA8A06EEAF03149BBDB9",
+  "duration_s": 193.31,
+  "unexpected_physical_dispatches": 0,
+  "latency_comparison": {
+    "stage_c": {
+      "p50": 7.18,
+      "p95": 9.06,
+      "p99": 9.56
+    },
+    "stage_d": {
+      "p50": 9.26,
+      "p95": 14.31,
+      "p99": 15.0
+    },
+    "stage_c_samples": [
+      7.41,
+      7.7,
+      8.77,
+      8.65,
+      6.83,
+      10.9,
+      7.56,
+      7.78,
+      7.47,
+      7.28
+    ],
+    "stage_d_samples": [
+      14.31,
+      8.69,
+      8.95,
+      13.07,
+      9.49,
+      8.42,
+      8.04,
+      8.83,
+      8.07,
+      7.95
+    ]
+  },
+  "summary": {
+    "Clean click": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 10.93,
+        "p95": 14.05,
+        "p99": 14.67
+      }
+    },
+    "Safe overlay dismissal": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 54.02,
+        "p95": 61.16,
+        "p99": 61.82
+      }
+    },
+    "Disabled overlay blocked": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 7.21,
+        "p95": 10.23,
+        "p99": 10.65
+      }
+    },
+    "Wrong-domain blocked": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 7.4,
+        "p95": 10.02,
+        "p99": 10.69
+      }
+    },
+    "Multiple overlays blocked": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 7.58,
+        "p95": 10.57,
+        "p99": 11.59
+      }
+    },
+    "Moving target blocked": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 52.85,
+        "p95": 58.32,
+        "p99": 59.19
+      }
+    },
+    "Subtree churn blocked": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 52.69,
+        "p95": 57.77,
+        "p99": 61.83
+      }
+    },
+    "Disappearing lifecycle": {
+      "passed": 50,
+      "total": 50,
+      "percentiles": {
+        "p50": 51.99,
+        "p95": 59.76,
+        "p99": 60.3
+      }
+    },
+    "TOCTOU race target": {
+      "passed": 100,
+      "total": 100,
+      "percentiles": {
+        "p50": 9.81,
+        "p95": 13.93,
+        "p99": 14.46
+      }
+    }
+  }
+}

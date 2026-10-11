@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  h1 { font-size: 18px; margin-bottom: 20px; font-weight: 600; color: #f8fafc; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #334155;
+    position: relative;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 12px 0; color: #94a3b8; }
+  .canvas {
+    background: #ffffff;
+    height: 180px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background-image: 
+      radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  .target-dot {
+    position: absolute;
+    left: 80px;
+    top: 70px;
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+  }
+  .ripple-preview {
+    position: absolute;
+    left: 80px;
+    top: 70px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    background: rgba(56, 189, 248, 0.25);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+    transform: translate(-50%, -50%);
+    z-index: 90;
+  }
+  .cursor-box {
+    position: absolute;
+    left: 80px;
+    top: 70px;
+    z-index: 110;
+  }
+
+  /* Candidate 1: Chunky Classic Pointer with Thick Dual-Layer Outline */
+  .c1-svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+    overflow: visible;
+  }
+
+  /* Candidate 2: Curvature-smoothed stem, broad head */
+  .c2-svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.42)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    overflow: visible;
+  }
+
+  /* Candidate 3: Delta / Chevron Arrow Pointer like reference image */
+  .c3-svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.45)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+    overflow: visible;
+  }
+
+  /* Candidate 4: Ultra-Premium Inflated Modern Pointer */
+  .c4-svg {
+    width: 40px;
+    height: 40px;
+    display: block;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)) drop-shadow(0 1.5px 3px rgba(0, 0, 0, 0.35));
+    overflow: visible;
+  }
+</style>
+</head>
+<body>
+  <h1>Comex Fake Cursor Design Candidates (Red dot = exact click coordinate)</h1>
+  <div class="grid">
+    
+    <!-- CANDIDATE 1 -->
+    <div class="card">
+      <h2>1. Chunky Pointer (Substantial Stem)</h2>
+      <div class="canvas">
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box">
+          <svg class="c1-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer thick white border using stroke-linejoin round -->
+            <path d="M 0 0 L 0 30 L 9 22 L 17 38 L 23 35 L 15 19 L 26 19 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="4"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANDIDATE 2 -->
+    <div class="card">
+      <h2>2. Broad Head + Extra Thick Stem</h2>
+      <div class="canvas">
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box">
+          <svg class="c2-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Broad head, thick stem (8px stem width), smooth joins -->
+            <path d="M 0 0 L 0 28 L 8.5 21 L 16 36 L 22.5 33 L 15 18 L 26 18 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="3.8"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANDIDATE 3 -->
+    <div class="card">
+      <h2>3. Diagonal Delta Arrow (From Reference)</h2>
+      <div class="canvas">
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box">
+          <svg class="c3-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Delta arrow directly matching reference photo -->
+            <path d="M 0 0 L 10 34 L 18 22 L 34 18 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="4.5"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANDIDATE 4 -->
+    <div class="card">
+      <h2>4. Rounded Premium Custom Pointer</h2>
+      <div class="canvas">
+        <div class="target-dot"></div>
+        <div class="ripple-preview"></div>
+        <div class="cursor-box">
+          <svg class="c4-svg" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Polished rounded path with bezier smoothed stem transitions -->
+            <path d="M 0 0 L 0 31 C 0 31.8 0.6 32.2 1.3 31.7 L 9.5 24.5 L 16.5 38.5 C 16.9 39.3 17.8 39.5 18.5 39.1 L 23.5 36.6 C 24.2 36.2 24.5 35.3 24.1 34.5 L 17 20.5 L 28 20.5 C 28.9 20.5 29.3 19.6 28.7 19.0 L 0 0 Z"
+                  fill="#000000"
+                  stroke="#ffffff"
+                  stroke-width="4.2"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  style="paint-order: stroke fill;"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -85,7 +85,7 @@ async def test_e2e_artifact_memory(temp_db_dir):
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm_a), \
              mock.patch("subprocess.run", return_value=mock_run_a):
-            res_a = await agent_service.execute_agent_loop("Compile the test questions into a durable artifact.", "http://127.0.0.1:9222")
+            res_a = await agent_service.execute_agent_loop("Compile the test questions into a durable artifact.", "http://127.0.0.1:9222", legacy_mode=True)
             assert "I have saved the artifact" in res_a
 
         # Verify artifact is stored
@@ -136,7 +136,7 @@ async def test_e2e_artifact_memory(temp_db_dir):
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm_b), \
              mock.patch("subprocess.run", return_value=mock_run_b):
-            res_b = await agent_service.execute_agent_loop("Retrieve the exact questions from the recent test.", "http://127.0.0.1:9222")
+            res_b = await agent_service.execute_agent_loop("Retrieve the exact questions from the recent test.", "http://127.0.0.1:9222", legacy_mode=True)
             assert "SENTINEL_Q1" in res_b and "SENTINEL_Q2" in res_b
 
         # --- TASK C (Negative Control) ---
@@ -177,6 +177,6 @@ async def test_e2e_artifact_memory(temp_db_dir):
         
         with mock.patch("agent_service.ChatOpenAI", return_value=mock_llm_c), \
              mock.patch("subprocess.run", return_value=mock_run_b):
-            res_c = await agent_service.execute_agent_loop("Retrieve the chemistry questions.", "http://127.0.0.1:9222")
+            res_c = await agent_service.execute_agent_loop("Retrieve the chemistry questions.", "http://127.0.0.1:9222", legacy_mode=True)
             assert "unavailable" in res_c.lower()
     pass

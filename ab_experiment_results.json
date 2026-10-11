@@ -1,0 +1,542 @@
+{
+  "task": "Google Maps 8-Leg Walking Itinerary (Shibuya to Shinjuku)",
+  "model": "ag/gemini-3.7-flash-medium",
+  "cdp_url": "http://127.0.0.1:9222",
+  "condition_a": {
+    "condition": "A",
+    "condition_name": "Nervous System ON",
+    "task_completion": "PASS",
+    "total_wall_clock_time": 158.77,
+    "number_of_browser_actions": 29,
+    "number_of_clicks": 2,
+    "number_of_text_entries": 16,
+    "number_of_page_navigations": 1,
+    "number_of_back_navigations": 0,
+    "number_of_retries": 0,
+    "number_of_failed_actions": 0,
+    "number_of_stale_or_missing_targets": 0,
+    "number_of_overlays_encountered": 0,
+    "number_of_action_blocks": 0,
+    "number_of_llm_turns": 30,
+    "final_answer_correctness": "CORRECT (All stops, distances, and times reported)",
+    "failure_reason": "None (Completed successfully)",
+    "itinerary_report": "Tokyo Multi-Stop Walking Itinerary:\n\nStops in Order:\n1. Start: Shibuya Station\n2. Stop 1: Hachiko Statue\n3. Stop 2: Shibuya Scramble Crossing\n4. Stop 3: Miyashita Park\n5. Stop 4: Takeshita Street\n6. Stop 5: Meiji Jingu\n7. Stop 6: Shinjuku Gyoen National Garden\n8. Stop 7: Omoide Yokocho\n9. End: Shinjuku Station\n\nLeg Breakdown:\n- Leg 1: Shibuya Station -> Hachiko Statue | Distance: 24 m | Walking Time: 1 min\n- Leg 2: Hachiko Statue -> Shibuya Scramble Crossing | Distance: 110 m | Walking Time: 2 min\n- Leg 3: Shibuya Scramble Crossing -> Miyashita Park | Distance: 400 m | Walking Time: 5 min\n- Leg 4: Miyashita Park -> Takeshita Street | Distance: 1.2 km | Walking Time: 18 min\n- Leg 5: Takeshita Street -> Meiji Jingu | Distance: 400 m | Walking Time: 6 min\n- Leg 6: Meiji Jingu -> Shinjuku Gyoen National Garden | Distance: 800 m | Walking Time: 11 min\n- Leg 7: Shinjuku Gyoen National Garden -> Omoide Yokocho | Distance: 1.0 km | Walking Time: 14 min\n- Leg 8: Omoide Yokocho -> Shinjuku Station | Distance: 230 m | Walking Time: 3 min\n\nTotals:\n- Total Distance: 4.164 km (4,164 m)\n- Total Walking Time: 60 min (1 hour)",
+    "tool_trace": [
+      {
+        "action": "navigate",
+        "url": "https://www.google.com/maps",
+        "timestamp": 6.775432000053115,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 13.704252625000663,
+        "status": "success"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Directions\"]",
+        "timestamp": 16.77155133301858,
+        "decision": "[P5_TELEMETRY] ALLOW (AllRulesPassed): All P0\u2013P4 rules passed; action authorized.",
+        "executed": true,
+        "status": "executed"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 21.697061708080582,
+        "status": "success"
+      },
+      {
+        "action": "click",
+        "selector": "button[data-tooltip=\"Walking\"]",
+        "timestamp": 27.626324083073996,
+        "decision": "[P5_TELEMETRY] ALLOW (AllRulesPassed): All P0\u2013P4 rules passed; action authorized.",
+        "executed": true,
+        "status": "executed"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Shibuya Station, Tokyo",
+        "press_enter": true,
+        "timestamp": 36.06162270810455,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Hachiko Statue, Tokyo",
+        "press_enter": true,
+        "timestamp": 42.31371270806994,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 47.763535666046664,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Hachiko Statue, Tokyo",
+        "press_enter": true,
+        "timestamp": 51.61233875004109,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Shibuya Scramble Crossing, Tokyo",
+        "press_enter": true,
+        "timestamp": 57.17814683308825,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 62.4228413751116,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Shibuya Scramble Crossing, Tokyo",
+        "press_enter": true,
+        "timestamp": 65.14290408301167,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Miyashita Park, Tokyo",
+        "press_enter": true,
+        "timestamp": 70.7619068750646,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 76.24889625003561,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Miyashita Park, Tokyo",
+        "press_enter": true,
+        "timestamp": 81.20481133309659,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Takeshita Street, Tokyo",
+        "press_enter": true,
+        "timestamp": 86.62041833309922,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 92.27014741604216,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Takeshita Street, Tokyo",
+        "press_enter": true,
+        "timestamp": 95.95933925011195,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Meiji Jingu, Tokyo",
+        "press_enter": true,
+        "timestamp": 102.40855158306658,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 108.24062104104087,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Meiji Jingu, Tokyo",
+        "press_enter": true,
+        "timestamp": 111.20836575003341,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Shinjuku Gyoen National Garden, Tokyo",
+        "press_enter": true,
+        "timestamp": 117.46042487502564,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 123.3200177079998,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Shinjuku Gyoen National Garden, Tokyo",
+        "press_enter": true,
+        "timestamp": 126.67841750010848,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Omoide Yokocho, Tokyo",
+        "press_enter": true,
+        "timestamp": 132.5491585000418,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 138.4182933330303,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc50 input",
+        "text": "Omoide Yokocho, Tokyo",
+        "press_enter": true,
+        "timestamp": 141.72918620810378,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "#sb_ifc51 input",
+        "text": "Shinjuku Station, Tokyo",
+        "press_enter": true,
+        "timestamp": 147.18788287509233,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 152.60699125006795,
+        "status": "success"
+      },
+      {
+        "action": "finish",
+        "report": "Tokyo Multi-Stop Walking Itinerary:\n\nStops in Order:\n1. Start: Shibuya Station\n2. Stop 1: Hachiko Statue\n3. Stop 2: Shibuya Scramble Crossing\n4. Stop 3: Miyashita Park\n5. Stop 4: Takeshita Street\n6. Stop 5: Meiji Jingu\n7. Stop 6: Shinjuku Gyoen National Garden\n8. Stop 7: Omoide Yokocho\n9. End: Shinjuku Station\n\nLeg Breakdown:\n- Leg 1: Shibuya Station -> Hachiko Statue | Distance: 24 m | Walking Time: 1 min\n- Leg 2: Hachiko Statue -> Shibuya Scramble Crossing | Distance: 110 m | Walking Time: 2 min\n- Leg 3: Shibuya Scramble Crossing -> Miyashita Park | Distance: 400 m | Walking Time: 5 min\n- Leg 4: Miyashita Park -> Takeshita Street | Distance: 1.2 km | Walking Time: 18 min\n- Leg 5: Takeshita Street -> Meiji Jingu | Distance: 400 m | Walking Time: 6 min\n- Leg 6: Meiji Jingu -> Shinjuku Gyoen National Garden | Distance: 800 m | Walking Time: 11 min\n- Leg 7: Shinjuku Gyoen National Garden -> Omoide Yokocho | Distance: 1.0 km | Walking Time: 14 min\n- Leg 8: Omoide Yokocho -> Shinjuku Station | Distance: 230 m | Walking Time: 3 min\n\nTotals:\n- Total Distance: 4.164 km (4,164 m)\n- Total Walking Time: 60 min (1 hour)",
+        "timestamp": 158.77298779110424
+      }
+    ]
+  },
+  "condition_b": {
+    "condition": "B",
+    "condition_name": "Nervous System Bypassed",
+    "task_completion": "PASS",
+    "total_wall_clock_time": 140.49,
+    "number_of_browser_actions": 31,
+    "number_of_clicks": 2,
+    "number_of_text_entries": 17,
+    "number_of_page_navigations": 1,
+    "number_of_back_navigations": 0,
+    "number_of_retries": 0,
+    "number_of_failed_actions": 1,
+    "number_of_stale_or_missing_targets": 1,
+    "number_of_overlays_encountered": 0,
+    "number_of_action_blocks": 0,
+    "number_of_llm_turns": 32,
+    "final_answer_correctness": "CORRECT (All stops, distances, and times reported)",
+    "failure_reason": "None (Completed successfully)",
+    "itinerary_report": "Multi-Stop Walking Itinerary (Tokyo)\n\nStops in order:\n1. Start: Shibuya Station\n2. Stop 1: Hachiko Statue\n3. Stop 2: Shibuya Scramble Crossing\n4. Stop 3: Miyashita Park\n5. Stop 4: Takeshita Street\n6. Stop 5: Meiji Jingu\n7. Stop 6: Shinjuku Gyoen National Garden\n8. Stop 7: Omoide Yokocho\n9. End: Shinjuku Station\n\nLeg-by-leg Walking Details:\n- Leg 1: Shibuya Station -> Hachiko Statue: 24 m | 1 min\n- Leg 2: Hachiko Statue -> Shibuya Scramble Crossing: 110 m | 2 min\n- Leg 3: Shibuya Scramble Crossing -> Miyashita Park: 400 m | 5 min\n- Leg 4: Miyashita Park -> Takeshita Street: 1.2 km (1200 m) | 18 min\n- Leg 5: Takeshita Street -> Meiji Jingu: 400 m | 6 min\n- Leg 6: Meiji Jingu -> Shinjuku Gyoen National Garden: 800 m | 11 min\n- Leg 7: Shinjuku Gyoen National Garden -> Omoide Yokocho: 950 m | 13 min\n- Leg 8: Omoide Yokocho -> Shinjuku Station: 180 m | 3 min\n\nTotals:\n- Total Walking Distance: 3.664 km (3,664 m)\n- Total Walking Time: 59 min",
+    "tool_trace": [
+      {
+        "action": "navigate",
+        "url": "https://www.google.com/maps",
+        "timestamp": 6.1570239999564365,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 14.119752165977843,
+        "status": "success"
+      },
+      {
+        "action": "click",
+        "selector": "button[aria-label=\"Directions\"]",
+        "timestamp": 18.2208404999692,
+        "status": "dispatched_legacy",
+        "rect": {
+          "x": 338,
+          "y": 12,
+          "width": 54,
+          "height": 48
+        }
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 21.803701582946815,
+        "status": "success"
+      },
+      {
+        "action": "click",
+        "selector": "button[data-tooltip=\"Walking\"]",
+        "timestamp": 23.65018350002356,
+        "status": "dispatched_legacy",
+        "rect": {
+          "x": 268,
+          "y": 30,
+          "width": 48,
+          "height": 40
+        }
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Choose starting point, or click on the map...\"]",
+        "text": "Shibuya Station",
+        "press_enter": true,
+        "timestamp": 26.766232458059676,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Choose destination...\"]",
+        "text": "Hachiko Statue",
+        "press_enter": true,
+        "timestamp": 31.63984012498986,
+        "status": "missing"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 34.19372616603505,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Choose destination, or click on the map...\"]",
+        "text": "Hachiko Statue",
+        "press_enter": true,
+        "timestamp": 37.9317020829767,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 42.7969664579723,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Shibuya Station, Shibuya, Tokyo, Japan\"]",
+        "text": "Hachiko Statue",
+        "press_enter": true,
+        "timestamp": 46.072217665961944,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Hachiko Statue, 2 Chome-1-1 Dogenzaka, Shibuya, Tokyo 150-0043, Japan\"]",
+        "text": "Shibuya Scramble Crossing",
+        "press_enter": true,
+        "timestamp": 51.70506258297246,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 56.92946374998428,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Hachiko Statue, 2 Chome-1-1 Dogenzaka, Shibuya, Tokyo 150-0043, Japan\"]",
+        "text": "Shibuya Scramble Crossing",
+        "press_enter": true,
+        "timestamp": 60.10138779098634,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Shibuya Scramble Crossing, Shibuya, Tokyo, Japan\"]",
+        "text": "Miyashita Park",
+        "press_enter": true,
+        "timestamp": 65.73618416604586,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 71.6703891659854,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Shibuya Scramble Crossing, Shibuya, Tokyo, Japan\"]",
+        "text": "Miyashita Park",
+        "press_enter": true,
+        "timestamp": 74.95544024999253,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Miyashita Park, 6 Chome-20-10 Jingumae, Shibuya, Tokyo 150-0001, Japan\"]",
+        "text": "Takeshita Street",
+        "press_enter": true,
+        "timestamp": 80.27364345802926,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 85.08964720799122,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Miyashita Park, 6 Chome-20-10 Jingumae, Shibuya, Tokyo 150-0001, Japan\"]",
+        "text": "Takeshita Street",
+        "press_enter": true,
+        "timestamp": 87.6261117500253,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Takeshita St, 1-ch\u014dme Jing\u016bmae, Shibuya, Tokyo 150-0001, Japan\"]",
+        "text": "Meiji Jingu",
+        "press_enter": true,
+        "timestamp": 93.58679570804816,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 98.48687212495133,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Takeshita St, 1-ch\u014dme Jing\u016bmae, Shibuya, Tokyo 150-0001, Japan\"]",
+        "text": "Meiji Jingu",
+        "press_enter": true,
+        "timestamp": 100.75403449998703,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Meiji Jingu, 1-1 Yoyogikamizonocho, Shibuya, Tokyo 151-8557, Japan\"]",
+        "text": "Shinjuku Gyoen National Garden",
+        "press_enter": true,
+        "timestamp": 105.87413166603073,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 110.99541162501555,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Meiji Jingu, 1-1 Yoyogikamizonocho, Shibuya, Tokyo 151-8557, Japan\"]",
+        "text": "Shinjuku Gyoen National Garden",
+        "press_enter": true,
+        "timestamp": 113.34520345798228,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Shinjuku Gyoen National Garden\"]",
+        "text": "Omoide Yokocho",
+        "press_enter": true,
+        "timestamp": 118.39025337505154,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 123.86404445802327,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Starting point Shinjuku Gyoen National Garden\"]",
+        "text": "Omoide Yokocho",
+        "press_enter": true,
+        "timestamp": 126.04805600002874,
+        "status": "success"
+      },
+      {
+        "action": "type_text",
+        "selector": "input[aria-label=\"Destination Omoide Yokocho Memory Lane, 1 Chome-2-2 Nishishinjuku, Shinjuku City, Tokyo 160-0023, Japan\"]",
+        "text": "Shinjuku Station",
+        "press_enter": true,
+        "timestamp": 131.38011649996042,
+        "status": "success"
+      },
+      {
+        "action": "get_page_content",
+        "timestamp": 136.4090897910064,
+        "status": "success"
+      },
+      {
+        "action": "finish",
+        "report": "Multi-Stop Walking Itinerary (Tokyo)\n\nStops in order:\n1. Start: Shibuya Station\n2. Stop 1: Hachiko Statue\n3. Stop 2: Shibuya Scramble Crossing\n4. Stop 3: Miyashita Park\n5. Stop 4: Takeshita Street\n6. Stop 5: Meiji Jingu\n7. Stop 6: Shinjuku Gyoen National Garden\n8. Stop 7: Omoide Yokocho\n9. End: Shinjuku Station\n\nLeg-by-leg Walking Details:\n- Leg 1: Shibuya Station -> Hachiko Statue: 24 m | 1 min\n- Leg 2: Hachiko Statue -> Shibuya Scramble Crossing: 110 m | 2 min\n- Leg 3: Shibuya Scramble Crossing -> Miyashita Park: 400 m | 5 min\n- Leg 4: Miyashita Park -> Takeshita Street: 1.2 km (1200 m) | 18 min\n- Leg 5: Takeshita Street -> Meiji Jingu: 400 m | 6 min\n- Leg 6: Meiji Jingu -> Shinjuku Gyoen National Garden: 800 m | 11 min\n- Leg 7: Shinjuku Gyoen National Garden -> Omoide Yokocho: 950 m | 13 min\n- Leg 8: Omoide Yokocho -> Shinjuku Station: 180 m | 3 min\n\nTotals:\n- Total Walking Distance: 3.664 km (3,664 m)\n- Total Walking Time: 59 min",
+        "timestamp": 140.492713790969
+      }
+    ]
+  },
+  "comparison": {
+    "task_completion": {
+      "A": "PASS",
+      "B": "PASS"
+    },
+    "total_wall_clock_time_s": {
+      "A": 158.77,
+      "B": 140.49
+    },
+    "browser_actions": {
+      "A": 29,
+      "B": 31
+    },
+    "clicks": {
+      "A": 2,
+      "B": 2
+    },
+    "text_entries": {
+      "A": 16,
+      "B": 17
+    },
+    "page_navigations": {
+      "A": 1,
+      "B": 1
+    },
+    "back_navigations": {
+      "A": 0,
+      "B": 0
+    },
+    "retries": {
+      "A": 0,
+      "B": 0
+    },
+    "failed_actions": {
+      "A": 0,
+      "B": 1
+    },
+    "stale_or_missing_targets": {
+      "A": 0,
+      "B": 1
+    },
+    "overlays_encountered": {
+      "A": 0,
+      "B": 0
+    },
+    "action_blocks": {
+      "A": 0,
+      "B": 0
+    },
+    "llm_turns": {
+      "A": 30,
+      "B": 32
+    },
+    "final_answer_correctness": {
+      "A": "CORRECT (All stops, distances, and times reported)",
+      "B": "CORRECT (All stops, distances, and times reported)"
+    },
+    "failure_reason": {
+      "A": "None (Completed successfully)",
+      "B": "None (Completed successfully)"
+    }
+  }
+}

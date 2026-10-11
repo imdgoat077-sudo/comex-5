@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Safe Overlay Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; position: relative; }
+    #real-target { padding: 12px 24px; font-size: 16px; cursor: pointer; }
+    #cookie-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(30, 41, 59, 0.95);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+    }
+    #cookie-accept {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="cookie-overlay">
+    <div><strong>Cookie Notice:</strong> We use cookies to improve experience.</div>
+    <button id="cookie-accept">Accept Cookies</button>
+  </div>
+
+  <h1>Underlying Application</h1>
+  <button id="real-target">Real Target Button</button>
+  <div id="status">Status: Normal</div>
+
+  <script>
+    window.__real_clicks = 0;
+    window.__dismiss_clicks = 0;
+
+    const overlay = document.getElementById('cookie-overlay');
+    const dismissBtn = document.getElementById('cookie-accept');
+    const realTarget = document.getElementById('real-target');
+    const status = document.getElementById('status');
+
+    dismissBtn.addEventListener('click', () => {
+      window.__dismiss_clicks++;
+      overlay.remove();
+      status.textContent = "Overlay dismissed";
+    });
+
+    realTarget.addEventListener('click', () => {
+      window.__real_clicks++;
+      status.textContent = `Real target clicked: ${window.__real_clicks}`;
+    });
+  </script>
+</body>
+</html>

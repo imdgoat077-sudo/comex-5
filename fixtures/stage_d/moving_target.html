@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Moving Target Overlay Fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; position: relative; }
+    #cookie-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(30, 41, 59, 0.95);
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 9999;
+    }
+    #cookie-accept {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      position: relative;
+      transition: none;
+    }
+    #real-target { padding: 12px 24px; font-size: 16px; cursor: pointer; margin-top: 80px; }
+  </style>
+</head>
+<body>
+  <div id="cookie-overlay">
+    <div>Notice with moving dismiss button</div>
+    <button id="cookie-accept">Accept Cookies</button>
+  </div>
+
+  <h1>Underlying Application</h1>
+  <button id="real-target">Real Target Button</button>
+
+  <script>
+    window.__real_clicks = 0;
+    window.__dismiss_clicks = 0;
+
+    const btn = document.getElementById('cookie-accept');
+    btn.addEventListener('click', () => { window.__dismiss_clicks++; });
+    document.getElementById('real-target').addEventListener('click', () => { window.__real_clicks++; });
+
+    // Continuously move button position every 25ms
+    let pos = 0;
+    let step = 10;
+    setInterval(() => {
+      pos = (pos + step) % 150;
+      btn.style.left = `${pos}px`;
+    }, 25);
+  </script>
+</body>
+</html>

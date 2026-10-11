@@ -8,14 +8,14 @@ def test_schema_meta_version(graph_store):
     with graph_store._lock:
         res = graph_store.conn.execute("MATCH (s:SchemaMeta {key: 'schema_version'}) RETURN s.value")
         assert res.has_next()
-        assert res.get_next()[0] == "3"
+        assert res.get_next()[0] == "4"
 
     # Verify idempotency of run_migrations
     with graph_store._lock:
         run_migrations(graph_store.conn)
         res = graph_store.conn.execute("MATCH (s:SchemaMeta {key: 'schema_version'}) RETURN s.value")
         assert res.has_next()
-        assert res.get_next()[0] == "3"
+        assert res.get_next()[0] == "4"
 
 
 def test_all_6_node_and_7_rel_tables_exist(graph_store):

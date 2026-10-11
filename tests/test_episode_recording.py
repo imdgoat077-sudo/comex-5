@@ -86,7 +86,7 @@ async def test_episode_completed_on_success(mock_llm_class, fresh_store):
     _mock_llm_class(mock_llm_class, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Find cheapest monitors.", "ws://dummy")
+        result = await execute_agent_loop("Find cheapest monitors.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -139,7 +139,7 @@ async def test_episode_max_steps_reached(mock_llm_class, fresh_store):
     mock_llm.ainvoke = always_tool_call
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Loop forever.", "ws://dummy")
+        result = await execute_agent_loop("Loop forever.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -174,7 +174,7 @@ async def test_episode_error_on_exception(mock_llm_class, fresh_store):
 
     with patch('agent_service.graph_store', fresh_store):
         with pytest.raises(RuntimeError, match="LLM connection dropped"):
-            await execute_agent_loop("Some task.", "ws://dummy")
+            await execute_agent_loop("Some task.", "ws://dummy", trusted_app_context=True)
 
     with fresh_store._lock:
         res = fresh_store.conn.execute(
@@ -202,7 +202,7 @@ async def test_episode_for_rel_links_to_agent(mock_llm_class, fresh_store):
     _mock_llm_class(mock_llm_class, final)
 
     with patch('agent_service.graph_store', fresh_store):
-        await execute_agent_loop(task_text, "ws://dummy")
+        await execute_agent_loop(task_text, "ws://dummy", trusted_app_context=True)
 
     with fresh_store._lock:
         res = fresh_store.conn.execute(
@@ -285,7 +285,7 @@ async def test_episode_write_failure_does_not_crash_loop(mock_llm_class, fresh_s
     fresh_store.create_episode = exploding_create_episode
 
     with patch('agent_service.graph_store', fresh_store):
-        result = await execute_agent_loop("Do research.", "ws://dummy")
+        result = await execute_agent_loop("Do research.", "ws://dummy", trusted_app_context=True)
         if isinstance(result, tuple):
             result = result[0]
 
@@ -328,7 +328,7 @@ async def test_self_reported_decoupled_from_outcome_status(mock_llm_class, fresh
     mock_llm.ainvoke = always_tool_step
 
     with patch('agent_service.graph_store', fresh_store):
-        await execute_agent_loop("Do something.", "ws://dummy")
+        await execute_agent_loop("Do something.", "ws://dummy", trusted_app_context=True)
 
     with fresh_store._lock:
         res = fresh_store.conn.execute(

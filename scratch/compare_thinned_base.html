@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #090d16;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 22px; margin-bottom: 6px; font-weight: 700; color: #38bdf8; }
+  .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .card {
+    background: #131c2e;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid #1e293b;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .card.highlight {
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .badge.current { background: #334155; color: #94a3b8; }
+  .badge.rec { background: #0284c7; color: #ffffff; }
+  .card h2 { font-size: 15px; margin: 0; color: #f8fafc; font-weight: 600; }
+  .card .metrics { font-size: 12px; color: #38bdf8; font-family: monospace; }
+  .card .desc { font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0; }
+  
+  .views-row {
+    display: flex;
+    gap: 12px;
+  }
+  .scene {
+    flex: 1;
+    height: 160px;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .scene.light {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .scene.dark {
+    background: #18181b;
+    border: 1px solid #27272a;
+    background-image: radial-gradient(#3f3f46 1.2px, transparent 1.2px);
+    background-size: 14px 14px;
+  }
+  .sample-btn {
+    position: absolute;
+    left: 24px;
+    top: 50px;
+    padding: 8px 18px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    font-size: 13px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+  .cursor-wrap {
+    position: absolute;
+    left: 64px;
+    top: 60px;
+  }
+  .zoom-scene {
+    background: #070a10;
+    height: 130px;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .zoom-scene svg {
+    transform: scale(2.4);
+  }
+</style>
+</head>
+<body>
+  <h1>Refining the Cursor Base Thinness</h1>
+  <div class="subtitle">Direct comparison: making the triangle base thinner and sleeker while preserving pure symmetry, rounded borders, and zero subpixel tip offset.</div>
+
+  <div class="grid" id="main-grid"></div>
+
+  <script>
+    const options = [
+      {
+        badge: 'ORIGINAL (BEFORE)',
+        badgeClass: 'current',
+        title: 'Original Wide Base',
+        metrics: 'Base Width: 29.0px | Opening Angle: 61°',
+        desc: 'Wide, flared triangular base. Wingtips spread far out at (7.5, 28) and (28, 7.5).',
+        highlight: false,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.8,
+        path: `M 0.5 0.5 
+               L 7.5 28 
+               C 8.2 29.6 10 30 11.5 29 
+               L 17 17 
+               L 29 11.5 
+               C 30 10 29.6 8.2 28 7.5 
+               Z`
+      },
+      {
+        badge: 'SLIGHTLY THINNER',
+        badgeClass: 'rec',
+        title: 'Option A: Moderately Slim Base',
+        metrics: 'Base Width: 23.3px | Opening Angle: 48° (-20%)',
+        desc: 'Base brought inward by ~20%. Keeps substantial presence, noticeably less flared.',
+        highlight: false,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.6,
+        path: `M 0.5 0.5 
+               L 10.5 27 
+               C 11.3 28.5 13 28.7 14.5 27.5 
+               L 18 18 
+               L 27.5 14.5 
+               C 28.7 13 28.5 11.3 27 10.5 
+               Z`
+      },
+      {
+        badge: 'RECOMMENDED SWEET SPOT',
+        badgeClass: 'rec',
+        title: 'Option B: Sleek Thinned Base',
+        metrics: 'Base Width: 21.0px | Opening Angle: 43° (-28%)',
+        desc: 'The ideal balance. Slender, elegant triangle silhouette with rounded corners and crisp notch.',
+        highlight: true,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.5,
+        path: `M 0.5 0.5 
+               L 11.5 26.5 
+               C 12.3 28 14 28.2 15.3 27 
+               L 18.2 18.2 
+               L 27 15.3 
+               C 28.2 14 28 12.3 26.5 11.5 
+               Z`
+      },
+      {
+        badge: 'EXTRA SLENDER',
+        badgeClass: 'rec',
+        title: 'Option C: Slender Aerodynamic Base',
+        metrics: 'Base Width: 18.5px | Opening Angle: 38° (-36%)',
+        desc: 'Very sleek, needle-sharp dart profile. Base narrowed significantly.',
+        highlight: false,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.4,
+        path: `M 0.5 0.5 
+               L 12.5 26 
+               C 13.3 27.4 15 27.5 16.2 26.3 
+               L 18.8 18.8 
+               L 26.3 16.2 
+               C 27.5 15 27.4 13.3 26 12.5 
+               Z`
+      },
+      {
+        badge: 'CURVED BASE',
+        badgeClass: 'rec',
+        title: 'Option D: Thinned Base with Soft Arc',
+        metrics: 'Base Width: 21.2px | Soft Inward Arc',
+        desc: 'Instead of an angled V notch, the base has a smooth continuous concave curve.',
+        highlight: false,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.5,
+        path: `M 0.5 0.5 
+               L 11.5 26.5 
+               C 12.5 28 14.5 28 16 26.8 
+               Q 18 18 26.8 16 
+               C 28 14.5 28 12.5 26.5 11.5 
+               Z`
+      },
+      {
+        badge: 'STRAIGHT TRIANGLE BASE',
+        badgeClass: 'rec',
+        title: 'Option E: Pure Flat Triangle Base',
+        metrics: 'Base Width: 21.0px | Flat Bottom Edge',
+        desc: 'A pure geometric triangle pointing diagonally with rounded corners at all 3 vertices.',
+        highlight: false,
+        size: 35,
+        viewBox: '-1.2 -1.2 35 35',
+        stroke: 4.5,
+        path: `M 0.5 0.5 
+               L 11.5 26 
+               C 12.5 27.8 14.5 27.8 16 26.3 
+               L 26.3 16 
+               C 27.8 14.5 27.8 12.5 26 11.5 
+               Z`
+      }
+    ];
+
+    const grid = document.getElementById('main-grid');
+    options.forEach(opt => {
+      const card = document.createElement('div');
+      card.className = `card ${opt.highlight ? 'highlight' : ''}`;
+      
+      const svgCode = `
+        <svg style="width: ${opt.size}px; height: ${opt.size}px; overflow: visible; filter: drop-shadow(0 3.5px 8px rgba(0,0,0,0.42)) drop-shadow(0 1px 3px rgba(0,0,0,0.25));" viewBox="${opt.viewBox}" fill="none">
+          <path d="${opt.path}"
+                fill="#000000"
+                stroke="#ffffff"
+                stroke-width="${opt.stroke}"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                style="paint-order: stroke fill;"/>
+        </svg>
+      `;
+
+      card.innerHTML = `
+        <div>
+          <span class="badge ${opt.badgeClass}">${opt.badge}</span>
+          <h2>${opt.title}</h2>
+          <div class="metrics">${opt.metrics}</div>
+        </div>
+        <p class="desc">${opt.desc}</p>
+        <div class="views-row">
+          <div class="scene light">
+            <div class="sample-btn">Click Me</div>
+            <div class="cursor-wrap">${svgCode}</div>
+          </div>
+          <div class="scene dark">
+            <div class="sample-btn" style="background:#0284c7;">Click Me</div>
+            <div class="cursor-wrap">${svgCode}</div>
+          </div>
+        </div>
+        <div class="zoom-scene">
+          ${svgCode}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
