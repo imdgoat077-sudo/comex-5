@@ -223,6 +223,8 @@ ALLOWED_CONDITION_TYPES: frozenset[str] = frozenset({
 ALLOWED_STEP_KEYS: frozenset[str] = frozenset({
     "action",
     "selector",
+    "target_text",
+    "submit",
     "text",
     "clear_first",
     "url",
@@ -233,8 +235,8 @@ ALLOWED_STEP_KEYS: frozenset[str] = frozenset({
 })
 
 ACTION_ALLOWED_KEYS: Dict[str, frozenset[str]] = {
-    "click": frozenset({"action", "selector", "preconditions", "postconditions"}),
-    "type": frozenset({"action", "selector", "text", "clear_first", "preconditions", "postconditions"}),
+    "click": frozenset({"action", "selector", "target_text", "preconditions", "postconditions"}),
+    "type": frozenset({"action", "selector", "target_text", "text", "clear_first", "submit", "preconditions", "postconditions"}),
     "navigate": frozenset({"action", "url", "preconditions", "postconditions"}),
     "inspect": frozenset({"action", "max_elements", "preconditions", "postconditions"}),
     "extract": frozenset({"action", "selector", "max_chars", "preconditions", "postconditions"}),
@@ -270,6 +272,8 @@ class SequenceStep:
     selector: Optional[str] = None
     text: Optional[str] = None
     clear_first: bool = True
+    target_text: Optional[str] = None   # click/type target located by visible text when the step runs
+    submit: bool = False                # type: press Enter after typing
     url: Optional[str] = None
     max_elements: int = 50
     max_chars: int = 8000
@@ -309,8 +313,10 @@ def _parse_and_validate_sequence(
             return None, f"Step {idx} contains unknown fields: {sorted(disallowed_keys)}"
 
         selector = s.get("selector")
+        target_text = s.get("target_text")
         text = s.get("text")
         clear_first = s.get("clear_first", True)
+        submit = s.get("submit", False)
         url = s.get("url")
         max_elements = s.get("max_elements", 50)
         max_chars = s.get("max_chars", 8000)
@@ -322,6 +328,16 @@ def _parse_and_validate_sequence(
             if len(selector.strip()) > MAX_SELECTOR_LENGTH:
                 return None, f"Step {idx} selector exceeds {MAX_SELECTOR_LENGTH} characters."
             selector = selector.strip()
+
+        if target_text is not None:
+            if not isinstance(target_text, str) or not target_text.strip():
+                return None, f"Step {idx} target_text must be a non-empty string."
+            if len(target_text) > MAX_CONDITION_TEXT_LEN:
+                return None, f"Step {idx} target_text exceeds {MAX_CONDITION_TEXT_LEN} characters."
+            target_text = target_text.strip()
+
+        if "submit" in s and not isinstance(submit, bool):
+            return None, f"Step {idx} ('type') 'submit' must be a boolean."
 
         if text is not None:
             if not isinstance(text, str):
@@ -355,14 +371,10 @@ def _parse_and_validate_sequence(
             max_chars = min(max_chars, MAX_EXTRACT_CHARS)
 
         # Action-specific mandatory parameter validation
-        if action == "click":
-            if not selector:
-                return None, f"Step {idx} ('click') requires non-empty string 'selector'."
-
-        elif action == "type":
-            if not selector:
-                return None, f"Step {idx} ('type') requires non-empty string 'selector'."
-            if text is None:
+        if action in ("click", "type"):
+            if bool(selector) == bool(target_text):
+                return None, f"Step {idx} ('{action}') requires exactly one of 'selector' or 'target_text'."
+            if action == "type" and text is None:
                 return None, f"Step {idx} ('type') requires string 'text'."
 
         elif action == "navigate":
@@ -435,6 +447,8 @@ def _parse_and_validate_sequence(
                 selector=selector,
                 text=text,
                 clear_first=clear_first,
+                target_text=target_text,
+                submit=bool(submit),
                 url=url,
                 max_elements=max_elements,
                 max_chars=max_chars,
@@ -854,6 +868,14 @@ def create_tool_execution_context(
         context_token=ctx_token,
         agent_id=eff_agent_id,
     )
+
+
+def _with_dialog(session: Any, data: Any) -> Any:
+    """Attach a JavaScript dialog the session auto-answered during this action, so the agent knows about it."""
+    if not isinstance(session, TabSessionContext) or not isinstance(data, dict):
+        return data
+    dialog = session.take_last_dialog()
+    return {**data, "dialog": dialog} if dialog else data
 
 
 def _cleanup_stored_artifact(store: Any, artifact_id: str) -> Tuple[bool, Optional[str]]:
@@ -1880,6 +1902,7 @@ class ComexToolService:
         text: str,
         clear_first: bool,
         context: ToolExecutionContext,
+        submit: bool = False,
     ) -> Any:
         context.check_active()
         binding = await session.resolve_and_bind(selector.strip())
@@ -1888,8 +1911,9 @@ class ComexToolService:
         auth_res = self._revalidate_locked_authority(context, "type", stage="mutation_boundary")
         if auth_res is not None:
             return auth_res
+        kwargs = {"press_enter": True} if submit else {}
         return await session.gate.async_attempt(
-            "type", binding=binding, text=text, clear_first=clear_first
+            "type", binding=binding, text=text, clear_first=clear_first, **kwargs
         )
 
     async def _execute_inspect_unlocked(
@@ -1992,6 +2016,87 @@ class ComexToolService:
                 retryable=False,
                 duration_ms=int((time.monotonic() - t0) * 1000),
             )
+
+    async def find_by_text(self, context: ToolExecutionContext, text: str, max_results: int = 5) -> ToolResult:
+        """
+        Read-only lookup of visible elements by their visible text/label. Returns numbered elements (refs),
+        like inspect. Authorised as an 'inspect' operation and serialised on the tab's action lock.
+        """
+        t0 = time.monotonic()
+        if not isinstance(text, str) or not text.strip():
+            return ToolResult.fail(ToolErrorCode.VALIDATION_ERROR, "text must be a non-empty string.", retryable=False)
+        if len(text) > MAX_CONDITION_TEXT_LEN:
+            return ToolResult.fail(
+                ToolErrorCode.VALIDATION_ERROR,
+                f"text exceeds maximum length of {MAX_CONDITION_TEXT_LEN} characters.",
+                retryable=False,
+            )
+        if not isinstance(max_results, int) or isinstance(max_results, bool) or max_results <= 0:
+            return ToolResult.fail(ToolErrorCode.VALIDATION_ERROR, "max_results must be a positive integer.", retryable=False)
+        eff_max = min(max_results, 20)
+
+        session, err_res = await self._authorize_and_resolve_session(context, "inspect")
+        if err_res:
+            return err_res
+
+        async def _do_find() -> Any:
+            async with session.action_lock:
+                auth_res = self._revalidate_locked_authority(context, "inspect")
+                if auth_res is not None:
+                    return auth_res
+                return await self._execute_find_unlocked(session, text, eff_max, context)
+
+        try:
+            res_or_data = await self._run_with_context(context, _do_find())
+            if isinstance(res_or_data, ToolResult):
+                return res_or_data
+            return ToolResult.ok(data=res_or_data, duration_ms=int((time.monotonic() - t0) * 1000))
+        except asyncio.CancelledError:
+            if context.is_cancelled():
+                return ToolResult.fail(
+                    ToolErrorCode.CANCELLED,
+                    f"Find cancelled for task '{context.task_id}'.",
+                    retryable=False,
+                    duration_ms=int((time.monotonic() - t0) * 1000),
+                )
+            raise
+        except TimeoutError as te:
+            return ToolResult.fail(
+                ToolErrorCode.DEADLINE_EXCEEDED, str(te), retryable=False,
+                duration_ms=int((time.monotonic() - t0) * 1000),
+            )
+        except Exception as e:
+            logger.error(f"Error in find_by_text: {e}")
+            return ToolResult.fail(
+                ToolErrorCode.OPERATION_FAILED, f"Error finding elements: {e}", retryable=False,
+                duration_ms=int((time.monotonic() - t0) * 1000),
+            )
+
+    async def _execute_find_unlocked(
+        self,
+        session: Any,
+        text: str,
+        eff_max: int,
+        context: ToolExecutionContext,
+    ) -> Any:
+        context.check_active()
+        auth_res = self._revalidate_locked_authority(context, "inspect", stage="mutation_boundary")
+        if auth_res is not None:
+            return auth_res
+        data = await session.find_by_text(text, max_results=eff_max)
+        if isinstance(data, dict) and isinstance(data.get("elements"), list):
+            data["elements"] = data["elements"][:eff_max]
+        return data
+
+    async def _resolve_text_target(self, session: Any, target_text: str, context: ToolExecutionContext) -> str:
+        """Resolve visible text to a precise ref selector at the moment a step runs (the page may have changed)."""
+        data = await self._execute_find_unlocked(session, target_text, 1, context)
+        if isinstance(data, ToolResult):
+            raise RuntimeError(data.error_message or "Text lookup was not authorised.")
+        elements = (data or {}).get("elements") or []
+        if not elements:
+            raise RuntimeError(f"No visible element matches the text '{target_text}'.")
+        return elements[0]["selector"]
 
     async def extract(
         self,
@@ -2174,7 +2279,7 @@ class ComexToolService:
             dur_ms = int((time.monotonic() - t0) * 1000)
             if gate_res.executed or gate_res.handler_invoked:
                 return ToolResult.ok(
-                    data=gate_res.execution_result,
+                    data=_with_dialog(session, gate_res.execution_result),
                     evidence={
                         "rule": getattr(gate_res.decision, "rule_name", "ALLOW"),
                         "handler_invoked": gate_res.handler_invoked,
@@ -2222,8 +2327,10 @@ class ComexToolService:
         selector: str,
         text: str,
         clear_first: bool = True,
+        submit: bool = False,
     ) -> ToolResult:
-        """Authoritative controlled type action through Method E and ActuatorGate."""
+        """Authoritative controlled type action through Method E and ActuatorGate.
+        With submit=True, Enter is pressed after typing (search boxes, single-field forms)."""
         t0 = time.monotonic()
         if not selector or not isinstance(selector, str) or not selector.strip():
             return ToolResult.fail(
@@ -2255,6 +2362,12 @@ class ComexToolService:
                 "clear_first must be a boolean.",
                 retryable=False,
             )
+        if not isinstance(submit, bool):
+            return ToolResult.fail(
+                ToolErrorCode.VALIDATION_ERROR,
+                "submit must be a boolean.",
+                retryable=False,
+            )
 
         session, err_res = await self._authorize_and_resolve_session(context, "type")
         if err_res:
@@ -2265,7 +2378,7 @@ class ComexToolService:
                 auth_res = self._revalidate_locked_authority(context, "type")
                 if auth_res is not None:
                     return auth_res
-                return await self._execute_type_unlocked(session, selector, text, clear_first, context)
+                return await self._execute_type_unlocked(session, selector, text, clear_first, context, submit=submit)
 
         try:
             res_or_gate = await self._run_with_context(context, _do_type())
@@ -2275,7 +2388,7 @@ class ComexToolService:
             dur_ms = int((time.monotonic() - t0) * 1000)
             if gate_res.executed:
                 return ToolResult.ok(
-                    data=gate_res.execution_result,
+                    data=_with_dialog(session, gate_res.execution_result),
                     evidence={"rule": getattr(gate_res.decision, "rule_name", "ALLOW")},
                     duration_ms=dur_ms,
                 )
@@ -2609,12 +2722,13 @@ class ComexToolService:
             return ToolResult.ok(data=nav_res, evidence={"url": step.url, "action_dispatched": True})
 
         elif step.action == "click":
-            gate_res = await self._execute_click_unlocked(session, step.selector or "", context)
+            selector = step.selector or await self._resolve_text_target(session, step.target_text or "", context)
+            gate_res = await self._execute_click_unlocked(session, selector, context)
             if isinstance(gate_res, ToolResult):
                 return gate_res
             if gate_res.executed or gate_res.handler_invoked:
                 return ToolResult.ok(
-                    data=gate_res.execution_result,
+                    data=_with_dialog(session, gate_res.execution_result),
                     evidence={
                         "rule": getattr(gate_res.decision, "rule_name", "ALLOW"),
                         "handler_invoked": gate_res.handler_invoked,
@@ -2631,14 +2745,15 @@ class ComexToolService:
                 )
 
         elif step.action == "type":
+            selector = step.selector or await self._resolve_text_target(session, step.target_text or "", context)
             gate_res = await self._execute_type_unlocked(
-                session, step.selector or "", step.text or "", step.clear_first, context
+                session, selector, step.text or "", step.clear_first, context, submit=step.submit
             )
             if isinstance(gate_res, ToolResult):
                 return gate_res
             if gate_res.executed:
                 return ToolResult.ok(
-                    data=gate_res.execution_result,
+                    data=_with_dialog(session, gate_res.execution_result),
                     evidence={"rule": getattr(gate_res.decision, "rule_name", "ALLOW"), "action_dispatched": True},
                 )
             else:

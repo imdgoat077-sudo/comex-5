@@ -24,3 +24,8 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Keep in-app pages (new tab) clear of the assistant drawer; the native page view is sized separately in BrowserCanvas */
+.browser-canvas-area.with-drawer {
+  margin-right: min(440px, 92vw);
+}

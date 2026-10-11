@@ -19,7 +19,7 @@ const ICON_MAP = {
 
 export default function BookmarksBar({ onNavigate }) {
   return (
-    <div className="bookmarks-bar">
+    <nav className="bookmarks-bar" aria-label="Bookmarks">
       <div className="bookmarks-scroll">
         {DEFAULT_BOOKMARKS.map((item) => {
           const IconComponent = ICON_MAP[item.icon] || Globe;
@@ -28,14 +28,14 @@ export default function BookmarksBar({ onNavigate }) {
               key={item.id}
               className="bookmark-chip"
               onClick={() => onNavigate(item.url)}
-              title={`Open ${item.title}`}
+              title={item.url}
             >
-              <IconComponent size={13} style={{ color: item.color }} />
+              <IconComponent size={13} />
               <span>{item.title}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

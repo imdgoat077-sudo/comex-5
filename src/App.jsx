@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BrowserNavbar from './components/Navbar/BrowserNavbar';
 import BookmarksBar from './components/Bookmarks/BookmarksBar';
 import BrowserCanvas from './components/Canvas/BrowserCanvas';
@@ -26,19 +26,45 @@ export default function App() {
   const [activeTabId, setActiveTabId] = useState('tab-1');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [currentTheme, setCurrentTheme] = useState('dark');
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [landingHistory, setLandingHistory] = useState([]);
 
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+  // Agent tabs whose worker is still running; the first one opened is focused so the user can watch it.
+  const workingAgentTabsRef = useRef(new Set());
 
   // Initialize tabs in Electron
   useEffect(() => {
     if (window.nexusNative?.tabs) {
       window.nexusNative.tabs.create('tab-1', 'comex://launchpad');
       window.nexusNative.tabs.setActive('tab-1');
-      
+
       window.nexusNative.tabs.onUpdate((tabId, data) => {
+        // A multi-agent worker opened its own visible tab (Electron already created the view)
+        if (tabId === '__agent_tab__' && data.tabId) {
+          const shouldFocus = workingAgentTabsRef.current.size === 0;
+          workingAgentTabsRef.current.add(data.tabId);
+          setTabs(prevTabs => prevTabs.some(t => t.id === data.tabId) ? prevTabs : [...prevTabs, {
+            id: data.tabId,
+            title: data.label || data.url,
+            url: data.url,
+            history: [data.url],
+            historyIndex: 0,
+            isLoading: true,
+            isBookmarked: false,
+            canGoBack: false,
+            canGoForward: false,
+            agentStatus: 'working',
+            agentLabel: data.label,
+          }]);
+          if (shouldFocus) setActiveTabId(data.tabId);
+          return;
+        }
+
+        if (data.agentStatus && data.agentStatus !== 'working') {
+          workingAgentTabsRef.current.delete(tabId);
+        }
+
         // Main process signals a new-window request → create a new Comex tab
         if (tabId === '__new_tab__' && data.url) {
           const newTabId = data.newTabId || `tab-${Date.now()}`;
@@ -76,6 +102,7 @@ export default function App() {
               isLoading: data.isLoading !== undefined ? data.isLoading : tab.isLoading,
               canGoBack: data.canGoBack !== undefined ? data.canGoBack : tab.canGoBack,
               canGoForward: data.canGoForward !== undefined ? data.canGoForward : tab.canGoForward,
+              agentStatus: data.agentStatus !== undefined ? data.agentStatus : tab.agentStatus,
             };
           }
           return tab;
@@ -153,6 +180,7 @@ export default function App() {
 
   // Close tab
   const handleCloseTab = (idToClose) => {
+    workingAgentTabsRef.current.delete(idToClose);
     if (tabs.length === 1) {
       // Don't close last tab; reset it to launchpad instead
       const remainingId = tabs[0].id;
@@ -425,7 +453,7 @@ export default function App() {
   };
 
   return (
-    <div className="nexus-app-container" data-theme={currentTheme}>
+    <div className="nexus-app-container">
       {/* Master Header Bar */}
       <BrowserNavbar
         tabs={tabs}
@@ -439,8 +467,6 @@ export default function App() {
         onToggleChat={handleToggleChat}
         isChatOpen={isChatOpen}
         unreadCount={unreadCount}
-        currentTheme={currentTheme}
-        onChangeTheme={(theme) => setCurrentTheme(theme)}
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
       />
 
@@ -466,8 +492,7 @@ export default function App() {
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
           activeTab={activeTab}
-          onNavigate={handleNavigate}
-          onAddTab={(url) => handleAddTab(url)}
+          onSelectTab={handleSelectTab}
         />
       </div>
 

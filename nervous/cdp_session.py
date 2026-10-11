@@ -23,6 +23,73 @@ from .world_state import BrowserState, WorldStateTracker
 
 logger = logging.getLogger("comex.nervous.cdp_session")
 
+# Bounds the links returned by extract_read_only (each link is capped at ~400 chars)
+MAX_EXTRACT_LINKS = 60
+
+# Attribute used to give page elements stable numeric references ("refs") agents can act on.
+REF_ATTRIBUTE = "data-comex-ref"
+
+
+def ref_selector(ref: Any) -> str:
+    """CSS selector for an element ref assigned by inspect_elements/find_by_text."""
+    return f'[{REF_ATTRIBUTE}="{int(ref)}"]'
+
+
+# Shared in-page helpers for numbered element inspection. Refs are kept on the element and
+# numbered from a per-document counter, so re-inspecting a page keeps existing numbers stable.
+_REF_HELPERS_JS = (
+    "const INTERACTIVE_SELECTOR = 'a[href], button, input:not([type=hidden]), select, textarea, summary,"
+    " [role=button], [role=link], [role=tab], [role=menuitem], [role=checkbox], [role=radio], [role=option],"
+    " [role=switch], [role=combobox], [role=searchbox], [role=textbox], [contenteditable=true], [tabindex=\"0\"]';"
+    "const isVisible = (el) => {"
+    "  const r = el.getBoundingClientRect();"
+    "  if (r.width < 1 || r.height < 1) return false;"
+    "  const cs = window.getComputedStyle(el);"
+    "  return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';"
+    "};"
+    "const clean = (s, n) => (s || '').replace(/\\s+/g, ' ').trim().slice(0, n);"
+    "const labelOf = (el) => {"
+    "  const byId = el.id ? document.querySelector(`label[for=\"${CSS.escape(el.id)}\"]`) : null;"
+    "  const img = el.querySelector ? el.querySelector('img[alt]') : null;"
+    "  const titled = el.querySelector ? el.querySelector('[title], [aria-label]') : null;"
+    "  return clean(el.getAttribute('aria-label') || el.innerText || (byId && byId.innerText) ||"
+    "    el.getAttribute('placeholder') || el.getAttribute('title') || (img && img.alt) ||"
+    "    (titled && (titled.getAttribute('aria-label') || titled.getAttribute('title'))) || el.value || el.name || '', 100);"
+    "};"
+    "const kindOf = (el) => {"
+    "  const role = el.getAttribute('role'); if (role) return role;"
+    "  const tag = el.tagName.toLowerCase();"
+    "  if (tag === 'a') return 'link';"
+    "  if (tag === 'select') return 'dropdown';"
+    "  if (tag === 'textarea' || el.isContentEditable) return 'textbox';"
+    "  if (tag === 'input') {"
+    "    const t = (el.type || 'text').toLowerCase();"
+    "    if (['submit', 'button', 'reset', 'image'].includes(t)) return 'button';"
+    "    if (['checkbox', 'radio'].includes(t)) return t;"
+    "    return t === 'search' ? 'searchbox' : (t === 'text' ? 'textbox' : t + ' input');"
+    "  }"
+    "  return tag;"
+    "};"
+    f"const REF_ATTR = '{REF_ATTRIBUTE}';"
+    "const refOf = (el) => {"
+    "  let ref = el.getAttribute(REF_ATTR);"
+    "  if (!ref) { window.__comexRefSeq = (window.__comexRefSeq || 0) + 1; ref = String(window.__comexRefSeq); el.setAttribute(REF_ATTR, ref); }"
+    "  return Number(ref);"
+    "};"
+    "const describe = (el) => {"
+    "  const item = { ref: refOf(el), kind: kindOf(el), label: labelOf(el), tag: el.tagName.toLowerCase() };"
+    "  item.selector = `[${REF_ATTR}=\"${item.ref}\"]`;"
+    "  if (el.href) item.href = clean(el.href, 200);"
+    "  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {"
+    "    if (el.value) item.value = clean(el.value, 60);"
+    "    if (el.placeholder) item.placeholder = clean(el.placeholder, 60);"
+    "  }"
+    "  if (el.type === 'checkbox' || el.type === 'radio') item.checked = !!el.checked;"
+    "  if (el.disabled || el.getAttribute('aria-disabled') === 'true') item.disabled = true;"
+    "  return item;"
+    "};"
+)
+
 
 
 class TabSessionContext:
@@ -79,6 +146,10 @@ class TabSessionContext:
         self._pump_task: Optional[asyncio.Task] = None
         self._running: bool = False
 
+        # Auto-answered JavaScript dialogs (see _auto_answer_dialog)
+        self.last_dialog: Optional[Dict[str, Any]] = None
+        self._dialog_tasks: set = set()
+
     async def start(self) -> None:
         """Start the sequential event processing loop."""
         if self._running:
@@ -109,7 +180,41 @@ class TabSessionContext:
         self._rx_seq += 1
         seq = self._rx_seq
         self._event_queue.put_nowait((seq, method, params))
+        if method == "Page.javascriptDialogOpening":
+            self._auto_answer_dialog(params)
         return seq
+
+    def _auto_answer_dialog(self, params: Dict[str, Any]) -> None:
+        """
+        A JavaScript dialog blocks the page, so every later agent action on the tab would hang.
+        Answer it immediately: alerts and leave-page prompts are accepted (they only inform or let the
+        agent's own navigation proceed); confirm/prompt are dismissed, so an agent can never silently
+        confirm something like a deletion. The dialog is recorded for the agent to see.
+        """
+        dialog_type = params.get("type", "alert")
+        accept = dialog_type in ("alert", "beforeunload")
+        self.last_dialog = {
+            "type": dialog_type,
+            "message": str(params.get("message", ""))[:300],
+            "action": "accepted" if accept else "dismissed",
+        }
+        logger.info("Auto-%s %s dialog on tab %s: %s", self.last_dialog["action"], dialog_type,
+                    self.tab_id, self.last_dialog["message"][:120])
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        task = loop.create_task(self.cdp.send("Page.handleJavaScriptDialog", {"accept": accept}))
+        # Keep a reference so the task isn't garbage-collected; surface failures in the log only.
+        self._dialog_tasks.add(task)
+        task.add_done_callback(self._dialog_tasks.discard)
+        task.add_done_callback(lambda t: t.cancelled() or (t.exception() and logger.warning(
+            "Could not answer dialog on tab %s: %s", self.tab_id, t.exception())))
+
+    def take_last_dialog(self) -> Optional[Dict[str, Any]]:
+        """Return and clear the most recent auto-answered dialog, if any."""
+        dialog, self.last_dialog = self.last_dialog, None
+        return dialog
 
     async def _process_events_loop(self) -> None:
         """Sequential consumer applying CDP events in FIFO order to WorldStateTracker."""
@@ -395,21 +500,50 @@ class TabSessionContext:
         """
         Pure read-only extraction of document or element content.
         Does not mutate DOM or dispatch physical inputs.
+
+        A selector matches ALL elements (e.g. every product card), not just the first, and the
+        result includes the links inside the extracted content. Without both, agents asked for
+        "a link for each product" looped through selector guesses, since innerText drops hrefs.
         """
         js_code = (
             "(function() {"
             f"  const sel = {json.dumps(selector)};"
             f"  const maxLen = {int(max_chars)};"
-            "  let el = sel ? document.querySelector(sel) : document.body;"
-            "  if (!el && sel) return { error: `Selector '${sel}' not found` };"
-            "  if (!el) el = document.documentElement;"
-            "  const text = (el.innerText || el.textContent || '').trim();"
+            f"  const maxLinks = {int(MAX_EXTRACT_LINKS)};"
+            "  let els = sel ? Array.from(document.querySelectorAll(sel)) : [document.body || document.documentElement];"
+            "  if (sel && els.length === 0) return { error: `Selector '${sel}' not found` };"
+            "  const text = els.map(e => (e.innerText || e.textContent || '').trim()).filter(Boolean).join('\\n---\\n');"
+            "  const links = []; const seen = new Set();"
+            "  for (const root of els) {"
+            "    const anchors = root.tagName === 'A' ? [root] : root.querySelectorAll('a[href]');"
+            "    for (const a of anchors) {"
+            "      if (links.length >= maxLinks) break;"
+            "      if (!/^https?:/i.test(a.href || '')) continue;"
+            "      if (a.closest('header, nav, footer, [role=\"navigation\"], [role=\"banner\"]')) continue;"
+            # Unwrap redirect/tracking links (e.g. Amazon sponsored /sspa/click?url=/item/dp/...)
+            "      let u = new URL(a.href);"
+            "      const target = u.searchParams.get('url') || u.searchParams.get('u');"
+            "      if (target && (target.startsWith('/') || /^https?:/i.test(target))) {"
+            "        try { u = new URL(target, u.origin); } catch (e) {}"
+            "      }"
+            # Long paths identify the page (/dp/ASIN, /p/itm...): drop tracking queries and collapse
+            # duplicate links to the same item (rating count, colour variants). Short paths keep the query (?q=).
+            "      const href = u.pathname.length > 20 ? u.origin + u.pathname : u.origin + u.pathname + u.search;"
+            "      if (seen.has(href)) continue;"
+            "      const label = (a.innerText || a.getAttribute('aria-label') || a.title || '').trim().replace(/\\s+/g, ' ');"
+            "      if (!label) continue;"
+            "      seen.add(href);"
+            "      links.push({ text: label.slice(0, 100), href: href.slice(0, 300) });"
+            "    }"
+            "  }"
             "  return {"
             "    title: document.title,"
             "    url: window.location.href,"
+            "    matched: els.length,"
             "    text: text.slice(0, maxLen),"
             "    truncated: text.length > maxLen,"
-            "    length: text.length"
+            "    length: text.length,"
+            "    links: links"
             "  };"
             "})()"
         )
@@ -425,37 +559,70 @@ class TabSessionContext:
 
     async def inspect_elements(self, max_elements: int = 50) -> Dict[str, Any]:
         """
-        Compact structured element inspection for interactive page elements.
+        Numbered inspection of visible interactive elements.
+
+        Each element is tagged in the page with a stable `data-comex-ref` number, so an agent can act on
+        "ref 12" instead of guessing CSS selectors; `[data-comex-ref="12"]` is then a precise selector that
+        still goes through the full actionability/quiescence pipeline. Elements in the viewport come first.
+        The attribute is the only DOM change made.
         """
         js_code = (
             "(function() {"
             f"  const limit = {int(max_elements)};"
-            "  const interactive = Array.from(document.querySelectorAll('button, a, input, select, textarea, [role=\"button\"], [tabindex=\"0\"]'));"
-            "  const items = [];"
-            "  for (let i = 0; i < interactive.length && items.length < limit; i++) {"
-            "    const el = interactive[i];"
-            "    const rect = el.getBoundingClientRect();"
-            "    if (rect.width === 0 || rect.height === 0 || window.getComputedStyle(el).visibility === 'hidden') continue;"
-            "    let sel = el.id ? `#${el.id}` : '';"
-            "    if (!sel && el.name) sel = `${el.tagName.toLowerCase()}[name=\"${el.name}\"]`;"
-            "    if (!sel) sel = `${el.tagName.toLowerCase()}:nth-of-type(${i + 1})`;"
-            "    items.push({"
-            "      tag: el.tagName.toLowerCase(),"
-            "      selector: sel,"
-            "      text: (el.innerText || el.value || el.placeholder || el.getAttribute('aria-label') || '').slice(0, 80).trim(),"
-            "      type: el.type || '',"
-            "      href: el.href || '',"
-            "      role: el.getAttribute('role') || '',"
-            "      box: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) }"
-            "    });"
-            "  }"
+            f"  {_REF_HELPERS_JS}"
+            "  const all = Array.from(document.querySelectorAll(INTERACTIVE_SELECTOR)).filter(isVisible);"
+            "  const vh = window.innerHeight;"
+            "  const inView = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; };"
+            "  const ordered = all.filter(inView).concat(all.filter(el => !inView(el)));"
+            "  const items = ordered.slice(0, limit).map(describe);"
             "  return {"
             "    title: document.title,"
             "    url: window.location.href,"
             "    elements: items,"
-            "    total_found: interactive.length,"
+            "    total_found: all.length,"
             "    returned: items.length"
             "  };"
+            "})()"
+        )
+        res = await self.cdp.send("Runtime.evaluate", {
+            "expression": js_code,
+            "returnByValue": True,
+            "awaitPromise": False,
+        })
+        return res.get("result", {}).get("value", {})
+
+    async def find_by_text(self, text: str, max_results: int = 5) -> Dict[str, Any]:
+        """
+        Find visible elements whose label matches `text` (exact, then prefix, then substring; case-insensitive),
+        preferring interactive elements. Matches are tagged with refs like inspect_elements.
+        """
+        js_code = (
+            "(function() {"
+            f"  const query = {json.dumps(text)}.trim().toLowerCase().replace(/\\s+/g, ' ');"
+            f"  const limit = {int(max_results)};"
+            f"  {_REF_HELPERS_JS}"
+            "  if (!query) return { title: document.title, url: location.href, elements: [], returned: 0 };"
+            "  const interactive = Array.from(document.querySelectorAll(INTERACTIVE_SELECTOR)).filter(isVisible);"
+            "  const textual = Array.from(document.querySelectorAll('label, h1, h2, h3, h4, li, span, div, p, td'))"
+            "    .filter(el => el.children.length === 0 && isVisible(el));"
+            "  const scored = [];"
+            "  const consider = (el, bonus, label) => {"
+            "    const l = label.toLowerCase().replace(/\\s+/g, ' ');"
+            "    if (!l) return;"
+            "    let score = l === query ? 3 : l.startsWith(query) ? 2 : l.includes(query) ? 1 : 0;"
+            "    if (score) scored.push({ el, score: score + bonus, len: l.length });"
+            "  };"
+            "  interactive.forEach(el => consider(el, 3, labelOf(el)));"
+            # Text in a plain span/div inside a link or button: the clickable thing is the enclosing control
+            "  textual.forEach(el => { const ctl = el.closest(INTERACTIVE_SELECTOR); consider(ctl || el, ctl ? 2 : 0, labelOf(el)); });"
+            "  scored.sort((a, b) => b.score - a.score || a.len - b.len);"
+            "  const seen = new Set(); const items = [];"
+            "  for (const s of scored) {"
+            "    if (seen.has(s.el)) continue; seen.add(s.el);"
+            "    items.push(describe(s.el));"
+            "    if (items.length >= limit) break;"
+            "  }"
+            "  return { title: document.title, url: location.href, elements: items, returned: items.length };"
             "})()"
         )
         res = await self.cdp.send("Runtime.evaluate", {

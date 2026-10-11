@@ -447,11 +447,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.on('tabs-create', (event, tabId, url) => {
-  if (!isAuthorizedSender(event)) return;
-  if (typeof tabId !== 'string' || !tabId) return;
-  if (views.has(tabId)) return;
-
+function createTabView() {
   const view = new WebContentsView({
     webPreferences: {
       contextIsolation: true,
@@ -459,10 +455,35 @@ ipcMain.on('tabs-create', (event, tabId, url) => {
       sandbox: false,
     },
   });
-
   view.webContents.setUserAgent(
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
   );
+  return view;
+}
+
+// Ask Chromium for the exact DevTools target id of a tab, so the agent backend can bind a worker
+// to it over CDP without URL-hash tricks.
+async function getDevToolsTargetId(webContents) {
+  const dbg = webContents.debugger;
+  const wasAttached = dbg.isAttached();
+  if (!wasAttached) dbg.attach('1.3');
+  try {
+    const { targetInfo } = await dbg.sendCommand('Target.getTargetInfo');
+    return targetInfo.targetId;
+  } finally {
+    if (!wasAttached) dbg.detach();
+  }
+}
+
+const AGENT_TAB_ID_PATTERN = /^[a-zA-Z0-9_\-:]{1,100}$/;
+const AGENT_TAB_STATUSES = new Set(['working', 'completed', 'failed', 'cancelled', 'blocked']);
+
+ipcMain.on('tabs-create', (event, tabId, url) => {
+  if (!isAuthorizedSender(event)) return;
+  if (typeof tabId !== 'string' || !tabId) return;
+  if (views.has(tabId)) return;
+
+  const view = createTabView();
 
   views.set(tabId, view);
   attachTabListeners(tabId, view);
@@ -474,17 +495,7 @@ ipcMain.on('tabs-create-hidden-agent', (event, tabId, url) => {
   if (typeof tabId !== 'string' || !tabId) return;
   if (hiddenAgentViews.has(tabId) || views.has(tabId)) return;
 
-  const view = new WebContentsView({
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-    },
-  });
-
-  view.webContents.setUserAgent(
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-  );
+  const view = createTabView();
 
   hiddenAgentViews.set(tabId, view);
   attachHiddenTabListeners(tabId, view);
@@ -500,6 +511,27 @@ ipcMain.on('tabs-destroy-hidden-agent', (event, tabId) => {
   if (!view) return;
   if (!view.webContents.isDestroyed()) view.webContents.close();
   hiddenAgentViews.delete(tabId);
+});
+
+// Visible tab opened for a multi-agent worker: shown in the tab bar so the user can watch it.
+ipcMain.handle('tabs-open-agent', async (event, { tabId, url, label } = {}) => {
+  if (!isAuthorizedSender(event)) throw new Error('Unauthorized sender');
+  if (typeof tabId !== 'string' || !AGENT_TAB_ID_PATTERN.test(tabId)) throw new Error('Invalid agent tab id');
+  if (views.has(tabId)) throw new Error(`Tab ${tabId} already exists`);
+  const safeLabel = typeof label === 'string' ? label.slice(0, 120) : '';
+
+  const view = createTabView();
+  views.set(tabId, view);
+  attachTabListeners(tabId, view);
+  loadTabUrl(view, url);
+  notifyRenderer('__agent_tab__', { tabId, url, label: safeLabel });
+  return getDevToolsTargetId(view.webContents);
+});
+
+ipcMain.on('tabs-set-agent-status', (event, tabId, status) => {
+  if (!isAuthorizedSender(event)) return;
+  if (!views.has(tabId) || !AGENT_TAB_STATUSES.has(status)) return;
+  notifyRenderer(tabId, { agentStatus: status });
 });
 
 ipcMain.on('tabs-destroy', (event, tabId) => {

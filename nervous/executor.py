@@ -178,7 +178,9 @@ class SelectorClickExecutor:
                 "clickCount": 1,
             })
 
-            # Optional clear: select-all and backspace
+            # Optional clear: select-all and backspace.
+            # The "selectAll" editing command selects everything on every platform; Ctrl+A alone only
+            # moves the caret on macOS, which made typing append to pre-filled fields.
             if clear_first:
                 try:
                     await self._cdp.send("Input.dispatchKeyEvent", {
@@ -187,6 +189,7 @@ class SelectorClickExecutor:
                         "modifiers": 2, # Ctrl/Cmd
                         "text": "a",
                         "unmodifiedText": "a",
+                        "commands": ["selectAll"],
                     })
                     await self._cdp.send("Input.dispatchKeyEvent", {
                         "type": "keyUp",
@@ -210,8 +213,21 @@ class SelectorClickExecutor:
             if text:
                 await self._cdp.send("Input.insertText", {"text": text})
 
+            # Optional submit: press Enter (search boxes, single-field forms) in the same action
+            submitted = bool(kwargs.get("press_enter", False))
+            if submitted:
+                for key_type in ("keyDown", "keyUp"):
+                    await self._cdp.send("Input.dispatchKeyEvent", {
+                        "type": key_type,
+                        "key": "Enter",
+                        "code": "Enter",
+                        "windowsVirtualKeyCode": 13,
+                        **({"text": "\r", "unmodifiedText": "\r"} if key_type == "keyDown" else {}),
+                    })
+
             return {
                 "typed": True,
+                "submitted": submitted,
                 "text": text,
                 "x": target_x,
                 "y": target_y,

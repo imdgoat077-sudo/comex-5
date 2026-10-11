@@ -138,7 +138,7 @@ export default function BrowserCanvas({
   return (
     <main
       ref={canvasRef}
-      className="browser-canvas-area"
+      className={`browser-canvas-area ${isChatOpen ? 'with-drawer' : ''}`}
       style={{ position: 'relative', width: '100%', height: '100%' }}
     >
       {tabList.map((tab) => {

@@ -1,66 +1,185 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Sparkles, X, Send, Bot, User, Trash2, Copy, Check,
-  ChevronRight, ChevronDown,
-  Globe, Play, Layers, Activity, Crown, Compass, Search, ShieldCheck, Terminal,
-  Brain, Cpu, BookOpen, Lightbulb, RefreshCw, Plus, Eye, Zap
+  X, ArrowUp, Square, Copy, Check, ChevronRight, ChevronDown, Brain, ArrowLeft,
+  SquarePen, RefreshCw, Trash2, Plus, Loader2, Circle, Minus, ExternalLink, Users, User
 } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
-import { runMultiAgentSwarm } from '../../agents/OrchestratorAgent';
-import { AGENT_ROLES } from '../../agents/types';
+import { runSwarm, stopSwarmRun, respondToSwarmApproval } from '../../agents/orchestratorClient';
 import './ChatDrawer.css';
-
-function getAgentRoleIcon(roleId, size = 12) {
-  switch (roleId) {
-    case 'orchestrator':
-      return <Crown size={size} />;
-    case 'navigator':
-      return <Compass size={size} />;
-    case 'researcher':
-      return <Search size={size} />;
-    case 'inspector':
-      return <ShieldCheck size={size} />;
-    default:
-      return <Bot size={size} />;
-  }
-}
 
 function formatDuration(durationMs) {
   const totalSeconds = Math.max(0, durationMs) / 1000;
-  if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
+  if (totalSeconds < 10) return `${totalSeconds.toFixed(1)}s`;
+  if (totalSeconds < 60) return `${Math.round(totalSeconds)}s`;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.round(totalSeconds % 60);
   return `${minutes}m ${seconds}s`;
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Re-renders every second while `active`, for live elapsed timers.
+function useNow(active) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!active) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+}
+
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'blocked']);
+
+function StatusIcon({ status }) {
+  if (status === 'running') return <Loader2 size={14} className="status-icon status-running animate-spin" aria-label="Running" />;
+  if (status === 'completed') return <Check size={14} className="status-icon status-ok" aria-label="Done" />;
+  if (status === 'failed' || status === 'blocked') return <X size={14} className="status-icon status-err" aria-label="Failed" />;
+  if (status === 'cancelled') return <Minus size={14} className="status-icon status-muted" aria-label="Stopped" />;
+  return <Circle size={12} className="status-icon status-muted" aria-label="Queued" />;
+}
+
+const RUN_PHASE_LABEL = {
+  planning: 'Planning the work',
+  working: 'Agents are working',
+  comparing: 'Comparing results',
+  approval: 'Waiting for your approval',
+  acting: 'Carrying out the approved step',
+  done: 'Done',
+  failed: 'Run failed',
+  stopped: 'Stopped',
+};
+
+function RunPanel({ run, onOpenTab }) {
+  const isLive = !['done', 'failed', 'stopped'].includes(run.phase);
+  const now = useNow(isLive);
+  const [expanded, setExpanded] = useState(true);
+  const elapsed = (run.endedAt || now) - run.startedAt;
+  const working = run.agents.filter((a) => a.status === 'running').length;
+  const finished = run.agents.filter((a) => a.status === 'completed').length;
+  const n = run.agents.length;
+  let headline = RUN_PHASE_LABEL[run.phase];
+  if (run.phase === 'working' && n > 0) headline = n === 1 ? 'Agent is working' : `${working} of ${n} agents working`;
+  if (run.phase === 'done' && n > 0) {
+    headline = n === 1
+      ? (finished ? 'Agent finished' : 'Agent stopped')
+      : finished === n ? `${n} agents finished` : `${finished} of ${n} agents finished`;
+  }
+
+  useEffect(() => {
+    if (run.phase === 'done') setExpanded(false);
+  }, [run.phase]);
+
+  return (
+    <section className={`run-panel run-${run.phase}`} aria-label="Multi-agent run" aria-live="polite">
+      {isLive && <div className="run-progress" aria-hidden="true" />}
+      <button type="button" className="run-header" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
+        <StatusIcon status={isLive ? 'running' : run.phase === 'done' ? 'completed' : run.phase === 'stopped' ? 'cancelled' : 'failed'} />
+        <span className="run-headline">{headline}</span>
+        <span className="run-elapsed">{formatDuration(elapsed)}</span>
+        {expanded ? <ChevronDown size={14} className="run-chevron" /> : <ChevronRight size={14} className="run-chevron" />}
+      </button>
+
+      {expanded && run.agents.length > 0 && (
+        <ol className="run-agents">
+          {run.agents.map((agent) => {
+            const agentElapsed = agent.startedAt ? (agent.endedAt || now) - agent.startedAt : null;
+            const canOpen = Boolean(agent.tabId && onOpenTab);
+            return (
+              <li key={agent.taskId} className={`run-agent agent-${agent.status}`}>
+                <StatusIcon status={agent.status} />
+                <div className="run-agent-body">
+                  <span className="run-agent-task">{agent.description}</span>
+                  {agent.status === 'running' && agent.currentStep && (
+                    <span className="run-agent-step">{agent.currentStep}</span>
+                  )}
+                  {agent.error && <span className="run-agent-error">{agent.error}</span>}
+                </div>
+                {agentElapsed != null && <span className="run-agent-time">{formatDuration(agentElapsed)}</span>}
+                {canOpen && (
+                  <button
+                    type="button"
+                    className="run-agent-open"
+                    onClick={() => onOpenTab(agent.tabId)}
+                    aria-label={`Watch this agent's tab: ${agent.description}`}
+                    title="Watch this agent's tab"
+                  >
+                    <ExternalLink size={13} />
+                  </button>
+                )}
+              </li>
+            );
+          })}
+          {run.phase === 'comparing' && (
+            <li className="run-agent agent-running">
+              <StatusIcon status="running" />
+              <div className="run-agent-body"><span className="run-agent-task">Comparing what the agents found</span></div>
+            </li>
+          )}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+// Helper agents started by the single agent, shaped like a multi-agent run for RunPanel
+function helperRun(helpers) {
+  const running = helpers.some((h) => h.status === 'running' || h.status === 'queued');
+  return {
+    phase: running ? 'working' : 'done',
+    startedAt: Math.min(...helpers.map((h) => h.startedAt || Date.now())),
+    endedAt: running ? null : Math.max(...helpers.map((h) => h.endedAt || Date.now())),
+    agents: helpers,
+  };
+}
+
+const SUGGESTIONS = {
+  single: [
+    'Summarize this page',
+    'Find the cheapest flight from Bengaluru to Delhi next Friday',
+    'Open YouTube and search for lo-fi beats',
+  ],
+  multi: [
+    'Compare the best headphones under ₹3,000 on Amazon and Flipkart',
+    'Compare the top stories on Hacker News and Lobsters',
+    'Research the pros and cons of Rust vs Go for a web backend',
+  ],
+};
+
+function EmptyState({ isMultiAgentMode, onPick }) {
+  const items = isMultiAgentMode ? SUGGESTIONS.multi : SUGGESTIONS.single;
+  return (
+    <div className="chat-empty">
+      <h2 className="chat-empty-title">{isMultiAgentMode ? 'What should the agents work on?' : 'What can Comex do for you?'}</h2>
+      <p className="chat-empty-text">
+        {isMultiAgentMode
+          ? 'Comex splits the task across up to four agents. Each opens its own tab so you can watch, then the results are compared into one answer.'
+          : 'Comex works in the current tab: it can read the page, search, click and fill in forms for you.'}
+      </p>
+      <ul className="chat-suggestions">
+        {items.map((text) => (
+          <li key={text}>
+            <button type="button" className="chat-suggestion" onClick={() => onPick(text)}>{text}</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export default function ChatDrawer({
   isOpen,
   onClose,
   activeTab,
-  onNavigate,
-  onAddTab
+  onSelectTab
 }) {
-  const [isMultiAgentMode, setIsMultiAgentMode] = useState(false); // default: browser-use Single Agent path
+  const [isMultiAgentMode, setIsMultiAgentMode] = useState(false);
   const [conversationId, setConversationId] = useState(() => 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
-  const [messages, setMessages] = useState([
-    {
-      id: 'm1',
-      sender: 'assistant',
-      text: "Welcome to **Comex Multi-Agent Swarm**.\n\nOur specialized sub-agent pipeline (Orchestrator, Navigator, Researcher, Inspector) executes concurrent background searches, inspects webview DOM semantics, and compiles structured research reports.",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    },
-    {
-      id: 'm2',
-      sender: 'assistant',
-      text: "### Autonomous Capabilities\n- Search & compare repositories on **GitHub**\n- Execute web queries on **Google**\n- Search & stream videos on **YouTube**\n- Summarize DOM content of active web pages",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
-
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [agentLogs, setAgentLogs] = useState([]);
-  const [currentProgress, setCurrentProgress] = useState(null);
   const [expandedActivity, setExpandedActivity] = useState({});
   const [activeSingleAgentMessageId, setActiveSingleAgentMessageId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -77,6 +196,15 @@ export default function ChatDrawer({
   const [isRefreshingBrain, setIsRefreshingBrain] = useState(false);
   const activeTaskRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Grow the composer with its content, up to the CSS max-height.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
 
   // Load Brain memory data from Python Agent service
   const fetchBrainData = async () => {
@@ -165,8 +293,8 @@ export default function ChatDrawer({
 
   // Auto scroll to bottom of chat
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping, agentLogs, activeSingleAgentMessageId]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isTyping, activeSingleAgentMessageId]);
 
   // Track active Single Agent message and append real tab activity details
   useEffect(() => {
@@ -180,7 +308,7 @@ export default function ChatDrawer({
       let stepMessage = '';
 
       if (activeTab.isLoading) {
-        stepMessage = `Loading ${activeTab.url || 'page'}...`;
+        stepMessage = `Loading ${activeTab.url || 'page'}`;
       } else if (activeTab.title && activeTab.title !== 'Comex Launchpad' && activeTab.title !== 'about:blank') {
         stepMessage = `Opened page: ${activeTab.title}`;
       } else if (activeTab.url && activeTab.url !== 'comex://launchpad' && activeTab.url !== 'about:blank') {
@@ -200,7 +328,7 @@ export default function ChatDrawer({
         });
       }
 
-      const latestMsg = newActivity[newActivity.length - 1]?.message || 'Working...';
+      const latestMsg = newActivity[newActivity.length - 1]?.message || 'Starting';
 
       return {
         ...msg,
@@ -288,7 +416,7 @@ export default function ChatDrawer({
                 if (currentEventType === 'thinking') {
                   return {
                     ...msg,
-                    statusLabel: data.detail || 'Thinking...',
+                    statusLabel: data.detail || 'Thinking',
                     thinking: data.detail
                   };
                 }
@@ -296,8 +424,24 @@ export default function ChatDrawer({
                 if (currentEventType === 'planning') {
                   return {
                     ...msg,
-                    statusLabel: data.detail || 'Planning next action...'
+                    statusLabel: data.detail || 'Planning the next step'
                   };
+                }
+
+                if (currentEventType.startsWith('helper_')) {
+                  const helpers = [...(msg.helpers || [])];
+                  const idx = helpers.findIndex((h) => h.taskId === data.agent_id);
+                  const base = idx >= 0 ? helpers[idx] : {
+                    taskId: data.agent_id, description: data.description, status: 'running', startedAt: Date.now(),
+                  };
+                  let next = { ...base, tabId: data.tab_id || base.tabId };
+                  if (currentEventType === 'helper_progress') next.currentStep = data.label;
+                  if (currentEventType === 'helper_finished') {
+                    next = { ...next, status: data.status, endedAt: Date.now(), currentStep: null,
+                      error: data.status === 'completed' ? null : data.error };
+                  }
+                  if (idx >= 0) helpers[idx] = next; else helpers.push(next);
+                  return { ...msg, helpers };
                 }
 
                 if (currentEventType === 'step') {
@@ -342,7 +486,7 @@ export default function ChatDrawer({
                     ? 'Task failed'
                     : (outcome.status === 'stopped'
                       ? 'Task stopped'
-                      : (outcome.fast_path ? `⚡ Fast Path (${outcome.adapter_name || 'Adapter'})` : (isConv ? '' : 'Task completed')));
+                      : (outcome.fast_path ? `Fast path: ${outcome.adapter_name || 'adapter'}` : (isConv ? '' : 'Task completed')));
                   return {
                     ...msg,
                     text: finalContent,
@@ -426,7 +570,7 @@ export default function ChatDrawer({
       return outcome;
     } catch (err) {
       if (err.name === 'AbortError') return { status: 'stopped', text: 'The task was stopped by the user.' };
-      return { status: 'failed', text: '### Connection Error\n\nCould not connect to the Python browser-use service (http://127.0.0.1:8000). Ensure `agent_service.py` is running.' };
+      return { status: 'failed', text: "Can't reach the Comex agent service at 127.0.0.1:8000. Start it with `python agent_service.py`, then try again." };
     }
   };
 
@@ -437,7 +581,7 @@ export default function ChatDrawer({
     active.stopping = true;
     setMessages((prev) => prev.map((message) => message.id === active.messageId ? {
       ...message,
-      statusLabel: 'Stopping...',
+      statusLabel: 'Stopping',
     } : message));
 
     active.controller.abort();
@@ -456,696 +600,631 @@ export default function ChatDrawer({
     }
   };
 
-  const handleSend = async (textToSend = input, intent = undefined) => {
-    const text = textToSend.trim();
-    if (!text) return;
+  const respondToApproval = async (messageId, runId, approved) => {
+    setMessages((prev) => prev.map((m) => m.id === messageId && m.approval
+      ? { ...m, approval: { ...m.approval, state: approved ? 'approved' : 'declined' } }
+      : m));
+    try {
+      await respondToSwarmApproval(runId, approved);
+    } catch (err) {
+      console.warn('Approval response failed:', err);
+    }
+  };
 
-    const userMsg = {
-      id: `u_${Date.now()}`,
-      sender: 'user',
-      text: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+  const stopSwarm = async () => {
+    const active = activeTaskRef.current;
+    if (!active || active.stopping) return;
 
-    setMessages((prev) => [...prev, userMsg]);
-    if (textToSend === input) setInput('');
-    setIsTyping(true);
-    setAgentLogs([]);
-    setCurrentProgress(null);
+    active.stopping = true;
+    active.controller.abort();
+    try {
+      await stopSwarmRun(active.runId);
+    } catch (err) {
+      console.warn('Swarm cancellation request failed:', err);
+    }
+  };
 
-    if (isMultiAgentMode) {
-      try {
-        const finalReport = await runMultiAgentSwarm(text, activeTab, {
-          onLog: (logItem) => {
-            setAgentLogs((prev) => [...prev, logItem]);
-          },
-          onProgress: (progress) => {
-            setCurrentProgress(progress);
-          },
-          onTabNavigate: onNavigate,
-          onAddTab
-        });
+  const runMultiAgent = async (text) => {
+    const controller = new AbortController();
+    activeTaskRef.current = { controller, runId: null, stopping: false };
+    const messageId = `a_run_${Date.now()}`;
+    setMessages((prev) => [...prev, {
+      id: messageId,
+      sender: 'assistant',
+      kind: 'run',
+      text: '',
+      timestamp: nowTime(),
+      run: { phase: 'planning', startedAt: Date.now(), endedAt: null, agents: [] },
+    }]);
 
-        const aiMsg = {
-          id: `a_${Date.now()}`,
-          sender: 'assistant',
-          text: finalReport,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
+    const updateMessage = (fn) => setMessages((prev) => prev.map((m) => (m.id === messageId ? fn(m) : m)));
+    const updateRun = (fn) => updateMessage((m) => ({ ...m, run: fn(m.run) }));
 
-        setMessages((prev) => [...prev, aiMsg]);
-      } catch (err) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `a_err_${Date.now()}`,
-            sender: 'assistant',
-            text: `### Multi-Agent Pipeline Warning\n\n${err.message}`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-      } finally {
-        setIsTyping(false);
-        setCurrentProgress(null);
-      }
-    } else {
-      // Single Agent path: keep one assistant message and replace its status in place.
-      const messageId = `a_${Date.now()}`;
-      setMessages((prev) => [...prev, {
-        id: messageId,
-        sender: 'assistant',
-        text: '',
-        status: 'working',
-        statusLabel: 'Working...',
-        activity: [],
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-      setActiveSingleAgentMessageId(messageId);
-
-      try {
-        const taskId = `task-${Date.now()}`;
-        const controller = new AbortController();
-        activeTaskRef.current = { taskId, controller, messageId };
-
-        const historyMessages = messages
-          .filter(m => (m.sender === 'user' || m.sender === 'assistant') && (m.text || m.content) && m.status !== 'working')
-          .slice(-10)
-          .map(m => ({
-            role: m.sender === 'user' ? 'user' : 'assistant',
-            content: (m.text || m.content || '').slice(0, 2000),
-            task_outcome: m.task_outcome || null,
+    const handleTaskUpdate = (ev) => {
+      switch (ev.eventType) {
+        case 'run_started':
+          if (activeTaskRef.current) activeTaskRef.current.runId = ev.run_id;
+          updateRun((run) => ({
+            ...run,
+            phase: 'working',
+            agents: (ev.tasks || []).map((t) => ({ taskId: t.task_id, description: t.description, status: 'queued' })),
           }));
-
-        let lastTaskContext = null;
-        for (let i = messages.length - 1; i >= 0; i--) {
-          if (messages[i].task_outcome) {
-            lastTaskContext = messages[i].task_outcome;
-            break;
+          return;
+        case 'task_started':
+          updateRun((run) => {
+            const started = { taskId: ev.task_id, description: ev.description, status: 'running', tabId: ev.tab_id, startedAt: Date.now() };
+            const exists = run.agents.some((a) => a.taskId === ev.task_id);
+            return {
+              ...run,
+              phase: ev.task_id === 'follow_up' ? 'acting' : run.phase,
+              agents: exists ? run.agents.map((a) => (a.taskId === ev.task_id ? { ...a, ...started } : a)) : [...run.agents, started],
+            };
+          });
+          return;
+        case 'task_progress':
+          updateRun((run) => ({
+            ...run,
+            agents: run.agents.map((a) => (a.taskId === ev.task_id ? { ...a, currentStep: ev.label } : a)),
+          }));
+          return;
+        case 'synthesis_started':
+          updateRun((run) => ({ ...run, phase: 'comparing' }));
+          return;
+        case 'approval_required':
+          updateMessage((m) => ({
+            ...m,
+            text: ev.proposal,
+            approval: { runId: ev.run_id, action: ev.action, state: 'pending' },
+            run: { ...m.run, phase: 'approval' },
+          }));
+          return;
+        default: {
+          const status = ev.eventType?.startsWith('task_') ? ev.eventType.slice(5) : null;
+          if (status && TERMINAL_STATUSES.has(status)) {
+            updateRun((run) => ({
+              ...run,
+              agents: run.agents.map((a) => (a.taskId === ev.task_id
+                ? { ...a, status, endedAt: Date.now(), error: status === 'completed' ? null : ev.error }
+                : a)),
+            }));
           }
         }
-
-        const convOptions = {
-          conversation_id: conversationId,
-          messages: historyMessages,
-          task_context: lastTaskContext,
-        };
-
-        const outcome = await executeSingleAgentAction(text, taskId, controller, intent, messageId, convOptions);
-        const active = activeTaskRef.current;
-        const terminalStatus = active?.stopping || outcome.status === 'stopped' ? 'stopped' : outcome.status;
-        const isConv = Boolean(outcome.is_conversational);
-        const defaultFallback = terminalStatus === 'failed'
-          ? 'The agent could not complete the task.'
-          : (isConv ? 'Hello! How can I assist you today?' : 'Task completed.');
-        const cleanText = terminalStatus === 'stopped'
-          ? 'The task was stopped by the user.'
-          : (outcome.content || outcome.text || defaultFallback).replace(/^### (Agent Error|Connection Error|Browser-Use Result)\s*/, '');
-        const isFastPath = Boolean(outcome.fast_path);
-        const fastPathBadge = isFastPath ? `⚡ Fast Path (${outcome.adapter_name || 'Adapter'})` : '';
-        setMessages((prev) => prev.map((message) => message.id === messageId ? {
-          ...message,
-          text: cleanText,
-          content: cleanText,
-          status: terminalStatus,
-          statusLabel: terminalStatus === 'stopped' ? 'Task stopped' : terminalStatus === 'failed' ? 'Task failed' : (isFastPath ? fastPathBadge : (isConv ? '' : 'Task completed')),
-          activity: message.activity || [],
-          durationMs: outcome.durationMs,
-          is_conversational: isConv,
-          fast_path: isFastPath,
-          adapter_name: outcome.adapter_name,
-          task_outcome: outcome.task_outcome,
-          completed: true,
-          isStreaming: false,
-        } : message));
-      } catch (err) {
-        const active = activeTaskRef.current;
-        const stopped = active?.stopping || err.name === 'AbortError';
-        setMessages((prev) => prev.map((message) => message.id === messageId ? {
-          ...message,
-          text: stopped ? 'The task was stopped by the user.' : err.message || 'The agent could not complete the task.',
-          status: stopped ? 'stopped' : 'failed',
-          statusLabel: stopped ? 'Task stopped' : 'Task failed',
-          activity: message.activity || [],
-          completed: true,
-        } : message));
-      } finally {
-        setIsTyping(false);
-        setActiveSingleAgentMessageId(null);
-        activeTaskRef.current = null;
       }
+    };
+
+    const expireApproval = (m) => (m.approval?.state === 'pending' ? { ...m.approval, state: 'expired' } : m.approval);
+
+    try {
+      const result = await runSwarm(text, { signal: controller.signal, onTaskUpdate: handleTaskUpdate });
+      updateMessage((m) => ({
+        ...m,
+        text: result.finalAnswer,
+        approval: expireApproval(m),
+        run: { ...m.run, phase: 'done', endedAt: Date.now() },
+      }));
+    } catch (err) {
+      const stopped = err.name === 'AbortError' || activeTaskRef.current?.stopping;
+      updateMessage((m) => ({
+        ...m,
+        text: stopped
+          ? 'Stopped. The agents’ tabs stay open if you want to look at what they found.'
+          : `The run failed: ${err.message}`,
+        failed: !stopped,
+        approval: expireApproval(m),
+        run: {
+          ...m.run,
+          phase: stopped ? 'stopped' : 'failed',
+          endedAt: Date.now(),
+          agents: m.run.agents.map((a) => (a.status === 'running' || a.status === 'queued' ? { ...a, status: 'cancelled', endedAt: Date.now() } : a)),
+        },
+      }));
+    } finally {
+      activeTaskRef.current = null;
+      setIsTyping(false);
+    }
+  };
+
+  const runSingleAgent = async (text, intent) => {
+    const messageId = `a_${Date.now()}`;
+    setMessages((prev) => [...prev, {
+      id: messageId,
+      sender: 'assistant',
+      text: '',
+      status: 'working',
+      statusLabel: 'Starting',
+      activity: [],
+      startedAt: Date.now(),
+      timestamp: nowTime()
+    }]);
+    setActiveSingleAgentMessageId(messageId);
+
+    try {
+      const taskId = `task-${Date.now()}`;
+      const controller = new AbortController();
+      activeTaskRef.current = { taskId, controller, messageId };
+
+      const historyMessages = messages
+        .filter(m => (m.sender === 'user' || m.sender === 'assistant') && (m.text || m.content) && m.status !== 'working')
+        .slice(-10)
+        .map(m => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: (m.text || m.content || '').slice(0, 2000),
+          task_outcome: m.task_outcome || null,
+        }));
+
+      let lastTaskContext = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].task_outcome) {
+          lastTaskContext = messages[i].task_outcome;
+          break;
+        }
+      }
+
+      const outcome = await executeSingleAgentAction(text, taskId, controller, intent, messageId, {
+        conversation_id: conversationId,
+        messages: historyMessages,
+        task_context: lastTaskContext,
+      });
+      const active = activeTaskRef.current;
+      const terminalStatus = active?.stopping || outcome.status === 'stopped' ? 'stopped' : outcome.status;
+      const isConv = Boolean(outcome.is_conversational);
+      const defaultFallback = terminalStatus === 'failed'
+        ? 'The agent could not complete the task.'
+        : (isConv ? 'Hello! How can I help?' : 'Task completed.');
+      const cleanText = terminalStatus === 'stopped'
+        ? 'Stopped.'
+        : (outcome.content || outcome.text || defaultFallback).replace(/^### (Agent Error|Connection Error|Browser-Use Result)\s*/, '');
+      const isFastPath = Boolean(outcome.fast_path);
+      setMessages((prev) => prev.map((message) => message.id === messageId ? {
+        ...message,
+        text: cleanText,
+        content: cleanText,
+        status: terminalStatus,
+        statusLabel: terminalStatus === 'stopped' ? 'Stopped' : terminalStatus === 'failed' ? 'Failed' : (isConv ? '' : 'Completed'),
+        activity: message.activity || [],
+        durationMs: outcome.durationMs ?? (Date.now() - message.startedAt),
+        is_conversational: isConv,
+        fast_path: isFastPath,
+        adapter_name: outcome.adapter_name,
+        task_outcome: outcome.task_outcome,
+        completed: true,
+        isStreaming: false,
+      } : message));
+    } catch (err) {
+      const active = activeTaskRef.current;
+      const stopped = active?.stopping || err.name === 'AbortError';
+      setMessages((prev) => prev.map((message) => message.id === messageId ? {
+        ...message,
+        text: stopped ? 'Stopped.' : err.message || 'The agent could not complete the task.',
+        status: stopped ? 'stopped' : 'failed',
+        statusLabel: stopped ? 'Stopped' : 'Failed',
+        activity: message.activity || [],
+        completed: true,
+      } : message));
+    } finally {
+      setIsTyping(false);
+      setActiveSingleAgentMessageId(null);
+      activeTaskRef.current = null;
+    }
+  };
+
+  const handleSend = async (textToSend = input, intent = undefined) => {
+    const text = textToSend.trim();
+    if (!text || isTyping) return;
+
+    setMessages((prev) => [...prev, { id: `u_${Date.now()}`, sender: 'user', text, timestamp: nowTime() }]);
+    if (textToSend === input) setInput('');
+    setIsTyping(true);
+
+    if (isMultiAgentMode) {
+      await runMultiAgent(text);
+    } else {
+      await runSingleAgent(text, intent);
+    }
+  };
+
+  const handleComposerKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
   const handleCopy = (id, text) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text || '');
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleClearChat = () => {
+  const handleNewChat = () => {
+    if (isTyping) return;
     setConversationId('conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
-    setMessages([
-      {
-        id: 'm1',
-        sender: 'assistant',
-        text: "Chat session cleared. Comex Multi-Agent Swarm pipeline is idle.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-    setAgentLogs([]);
+    setMessages([]);
+    setExpandedActivity({});
+    inputRef.current?.focus();
   };
 
   if (!isOpen) return null;
 
-  return (
-    <div className="chat-drawer animate-slide-right">
-      {/* Drawer Header Row 1: Brand & View Switcher */}
-      <div className="chat-header">
-        <div className="chat-title-group">
-          <div className="ai-avatar-badge">
-            <Sparkles size={15} />
-          </div>
-          <div className="view-toggle-pills">
-            <button
-              className={`view-pill ${activeDrawerTab === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveDrawerTab('chat')}
-            >
-              Chat
-            </button>
-            <button
-              className={`view-pill ${activeDrawerTab === 'brain' ? 'active' : ''}`}
-              onClick={() => setActiveDrawerTab('brain')}
-            >
-              <Brain size={13} />
-              <span>Memory & Brain</span>
-            </button>
-          </div>
-        </div>
+  const tabTitle = activeTab?.url && !activeTab.url.startsWith('comex://') ? activeTab.title : null;
 
-        <div className="chat-header-actions">
-          {activeDrawerTab === 'chat' ? (
-            <button
-              className="chat-icon-btn"
-              onClick={handleClearChat}
-              title="Clear Chat History"
-            >
-              <Trash2 size={15} />
-            </button>
-          ) : (
-            <button
-              className="chat-icon-btn"
-              onClick={fetchBrainData}
-              title="Refresh Brain Data"
-            >
-              <RefreshCw size={14} className={isRefreshingBrain ? 'animate-spin' : ''} />
-            </button>
-          )}
-          <button
-            className="chat-icon-btn"
-            onClick={onClose}
-            title="Close Drawer"
-          >
-            <X size={16} />
-          </button>
-        </div>
+  const renderFooter = (msg) => (
+    <div className="msg-footer">
+      <span>{msg.timestamp}</span>
+      {msg.durationMs != null && <span>{formatDuration(msg.durationMs)}</span>}
+      {msg.fast_path && <span className="msg-tag">Fast path</span>}
+      <button
+        type="button"
+        className="msg-copy"
+        onClick={() => handleCopy(msg.id, msg.text)}
+        aria-label={copiedId === msg.id ? 'Copied' : 'Copy reply'}
+        title="Copy"
+      >
+        {copiedId === msg.id ? <Check size={13} /> : <Copy size={13} />}
+      </button>
+    </div>
+  );
+
+  const renderSingleAgentWorking = (msg) => (
+    <div className="agent-working-panel" aria-live="polite">
+      <div className="agent-working-status">
+        <Loader2 size={14} className="status-icon status-running animate-spin" />
+        <span className="agent-working-label">{msg.statusLabel || 'Starting'}</span>
+        <ElapsedTime since={msg.startedAt} />
       </div>
-
-      {/* Drawer Header Row 2: Active Tab Badge & Swarm Mode Toggle */}
-      {activeDrawerTab === 'chat' && (
-        <div className="chat-subbar">
-          <div className="active-tab-chip" title={activeTab?.title || "Comex Launchpad"}>
-            <Globe size={12} className="tab-chip-icon" />
-            <span className="active-tab-text">{activeTab?.title || "Comex Launchpad"}</span>
-          </div>
-
-          <button
-            className={`agent-mode-toggle ${isMultiAgentMode ? 'active' : ''}`}
-            onClick={() => setIsMultiAgentMode(!isMultiAgentMode)}
-            title={isMultiAgentMode ? "Multi-Agent Swarm Mode Active" : "Single Agent Mode"}
-          >
-            <Layers size={12} />
-            <span>{isMultiAgentMode ? "Swarm Mode" : "Single Agent"}</span>
-          </button>
+      {msg.perception && (
+        <div className="agent-working-context" title={msg.perception.url}>
+          Reading {msg.perception.title || msg.perception.url}
         </div>
       )}
+      {msg.activity?.length > 0 && (
+        <ol className="agent-steps">
+          {msg.activity.map((stepItem, idx) => (
+            <li key={stepItem.id || idx} className={`agent-step step-${stepItem.status || 'done'}`}>
+              <StatusIcon status={stepItem.status === 'running' ? 'running' : stepItem.status === 'failed' ? 'failed' : 'completed'} />
+              <span className="agent-step-label">{stepItem.label || stepItem.message}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
 
-      {/* Messages List Area OR Brain Inspector */}
+  const renderStepsToggle = (msg) => {
+    const steps = msg.activity || [];
+    if (steps.length === 0 || msg.is_conversational) return null;
+    const open = Boolean(expandedActivity[msg.id]);
+    return (
+      <div className="steps-toggle-group">
+        <button
+          type="button"
+          className="steps-toggle"
+          onClick={() => setExpandedActivity((prev) => ({ ...prev, [msg.id]: !prev[msg.id] }))}
+          aria-expanded={open}
+        >
+          <StatusIcon status={msg.status === 'completed' ? 'completed' : msg.status === 'stopped' ? 'cancelled' : 'failed'} />
+          <span>{msg.statusLabel || 'Completed'} in {steps.length} {steps.length === 1 ? 'step' : 'steps'}</span>
+          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </button>
+        {open && (
+          <ol className="agent-steps agent-steps-history">
+            {steps.map((stepItem, idx) => (
+              <li key={stepItem.id || idx} className={`agent-step step-${stepItem.status || 'done'}`}>
+                <StatusIcon status={stepItem.status === 'failed' ? 'failed' : 'completed'} />
+                <span className="agent-step-label">{stepItem.label || stepItem.message}</span>
+                {stepItem.tool && <span className="agent-step-tool">{stepItem.tool}</span>}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    );
+  };
+
+  const renderApproval = (msg) => {
+    const { approval } = msg;
+    if (!approval) return null;
+    return (
+      <div className={`approval approval-${approval.state}`} role="group" aria-label="Approval needed">
+        <p className="approval-question">Comex wants to: <strong>{approval.action}</strong></p>
+        {approval.state === 'pending' ? (
+          <div className="approval-actions">
+            <button type="button" className="btn btn-primary" onClick={() => respondToApproval(msg.id, approval.runId, true)}>
+              Approve
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => respondToApproval(msg.id, approval.runId, false)}>
+              Decline
+            </button>
+            <span className="approval-note">Comex never checks out or pays.</span>
+          </div>
+        ) : (
+          <p className="approval-state" role="status">
+            {{ approved: 'Approved', declined: 'Declined', expired: 'No longer waiting for approval' }[approval.state]}
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  const renderMessage = (msg) => {
+    if (msg.sender === 'user') {
+      return (
+        <div key={msg.id} className="msg msg-user">
+          <div className="msg-user-bubble">{msg.text}</div>
+        </div>
+      );
+    }
+
+    const isWorking = msg.status === 'working';
+    return (
+      <article key={msg.id} className={`msg msg-assistant ${msg.status === 'failed' || msg.failed ? 'msg-failed' : ''}`}>
+        {msg.kind === 'run' && <RunPanel run={msg.run} onOpenTab={onSelectTab} />}
+        {msg.helpers?.length > 0 && <RunPanel run={helperRun(msg.helpers)} onOpenTab={onSelectTab} />}
+        {isWorking ? renderSingleAgentWorking(msg) : renderStepsToggle(msg)}
+        {(msg.text || msg.content) && (
+          <div className="msg-body">
+            <MarkdownRenderer content={msg.text || msg.content} />
+          </div>
+        )}
+        {renderApproval(msg)}
+        {!isWorking && (msg.text || msg.content) && renderFooter(msg)}
+      </article>
+    );
+  };
+
+  return (
+    <aside className="chat-drawer animate-slide-right" aria-label="Comex assistant">
+      <header className="drawer-header">
+        {activeDrawerTab === 'brain' ? (
+          <>
+            <button type="button" className="icon-btn" onClick={() => setActiveDrawerTab('chat')} aria-label="Back to chat" title="Back to chat">
+              <ArrowLeft size={16} />
+            </button>
+            <h2 className="drawer-title">Memory</h2>
+            <div className="drawer-actions">
+              <button type="button" className="icon-btn" onClick={fetchBrainData} aria-label="Refresh memory" title="Refresh">
+                <RefreshCw size={15} className={isRefreshingBrain ? 'animate-spin' : ''} />
+              </button>
+              <button type="button" className="icon-btn" onClick={onClose} aria-label="Close assistant" title="Close (⌘J)">
+                <X size={16} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="drawer-title">Assistant</h2>
+            <div className="drawer-actions">
+              <button type="button" className="icon-btn" onClick={() => setActiveDrawerTab('brain')} aria-label="Memory" title="Memory">
+                <Brain size={15} />
+              </button>
+              <button type="button" className="icon-btn" onClick={handleNewChat} disabled={isTyping} aria-label="New chat" title="New chat">
+                <SquarePen size={15} />
+              </button>
+              <button type="button" className="icon-btn" onClick={onClose} aria-label="Close assistant" title="Close (⌘J)">
+                <X size={16} />
+              </button>
+            </div>
+          </>
+        )}
+      </header>
+
       {activeDrawerTab === 'chat' ? (
         <>
-          <div className="chat-messages">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`chat-bubble-wrapper ${msg.sender === 'user' ? 'user-wrapper' : 'assistant-wrapper'}`}
+          <div className="drawer-modebar">
+            <div className="mode-switch" role="radiogroup" aria-label="Agent mode">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={!isMultiAgentMode}
+                className={`mode-option ${!isMultiAgentMode ? 'selected' : ''}`}
+                onClick={() => setIsMultiAgentMode(false)}
+                disabled={isTyping}
               >
-                {msg.sender === 'assistant' && (
-                  <div className="avatar-icon assistant">
-                    <Bot size={13} />
-                  </div>
-                )}
-                <div className={`chat-bubble ${msg.sender} ${msg.status ? `message-${msg.status}` : ''}`}>
-                  {msg.sender === 'assistant' && msg.status ? (
-                    <>
-                      {/* Live In-Progress State: Perception, Thinking & Minimalist Linear Steps */}
-                      {msg.status === 'working' ? (
-                        <div className="agent-live-execution-panel animate-fade-in">
-                          {/* Perception Header */}
-                          {msg.perception && (
-                            <div className="agent-perception-bar">
-                              <Eye size={12} className="perception-icon" />
-                              <span className="perception-label">Observing:</span>
-                              <span className="perception-target" title={msg.perception.url}>
-                                {msg.perception.title || msg.perception.url || 'Active Tab'}
-                              </span>
-                            </div>
-                          )}
+                <User size={13} /> Single agent
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isMultiAgentMode}
+                className={`mode-option ${isMultiAgentMode ? 'selected' : ''}`}
+                onClick={() => setIsMultiAgentMode(true)}
+                disabled={isTyping}
+              >
+                <Users size={13} /> Multi-agent
+              </button>
+            </div>
+            <span className="drawer-context" title={tabTitle || ''}>
+              {isMultiAgentMode ? 'Agents open their own tabs' : tabTitle ? `In: ${tabTitle}` : 'New tab'}
+            </span>
+          </div>
 
-                          {/* Minimalist Linear Steps */}
-                          <div className="agent-linear-steps">
-                            {msg.activity && msg.activity.length > 0 ? (
-                              msg.activity.map((stepItem, idx) => {
-                                const isCurrent = stepItem.status === 'running';
-                                const isFailed = stepItem.status === 'failed';
-                                return (
-                                  <div
-                                    key={stepItem.id || idx}
-                                    className={`linear-step-row ${isCurrent ? 'active' : isFailed ? 'failed' : 'done'}`}
-                                  >
-                                    <div className="step-indicator">
-                                      {isCurrent ? (
-                                        <span className="step-pulse-dot" />
-                                      ) : isFailed ? (
-                                        <span className="step-fail-cross">✕</span>
-                                      ) : (
-                                        <span className="step-check-mark">✓</span>
-                                      )}
-                                    </div>
-                                    <div className="step-body">
-                                      <span className="step-label-text">{stepItem.label}</span>
-                                      {stepItem.tool && (
-                                        <span className="step-tool-badge">{stepItem.tool}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <div className="linear-step-row active">
-                                <div className="step-indicator">
-                                  <span className="step-pulse-dot" />
-                                </div>
-                                <div className="step-body">
-                                  <span className="step-label-text">{msg.statusLabel || 'Analyzing request...'}</span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        /* Completed/Stopped State: Slim Collapsible Summary Bar (only when tools were run) */
-                        <>
-                          {msg.activity && msg.activity.length > 0 && !msg.is_conversational && (
-                            <div className="agent-completed-container">
-                              <button
-                                className="agent-completion-bar"
-                                onClick={() => setExpandedActivity((prev) => ({ ...prev, [msg.id]: !prev[msg.id] }))}
-                                aria-expanded={Boolean(expandedActivity[msg.id])}
-                                type="button"
-                              >
-                                <div className="completion-summary-left">
-                                  <span className={`completion-status-icon ${msg.status === 'completed' ? 'success' : 'warn'}`}>
-                                    {msg.status === 'completed' ? '✓' : '•'}
-                                  </span>
-                                  <span className="completion-title">
-                                    {msg.status === 'stopped' ? 'Task stopped' : msg.status === 'failed' ? 'Task failed' : 'Task completed'}
-                                  </span>
-                                  <span className="completion-meta-tag">
-                                    {msg.activity.length} {msg.activity.length === 1 ? 'step' : 'steps'}
-                                  </span>
-                                  {msg.durationMs != null && (
-                                    <span className="completion-meta-tag">
-                                      {formatDuration(msg.durationMs)}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="completion-toggle-btn">
-                                  <span>{expandedActivity[msg.id] ? 'Hide steps' : 'View steps'}</span>
-                                  {expandedActivity[msg.id] ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                                </div>
-                              </button>
-
-                              {expandedActivity[msg.id] && (
-                                <div className="agent-expanded-trajectory animate-fade-in">
-                                  {msg.activity.map((stepItem, idx) => (
-                                    <div key={stepItem.id || idx} className="trajectory-item">
-                                      <span className="trajectory-num">{idx + 1}</span>
-                                      <span className="trajectory-label">{stepItem.label}</span>
-                                      {stepItem.tool && (
-                                        <span className="trajectory-tool">{stepItem.tool}</span>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {(msg.text || msg.content) && (
-                        <div className="chat-message-text">
-                          <MarkdownRenderer content={msg.text || msg.content} />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="bubble-text">
-                      {msg.sender === 'user' ? <p>{msg.text || msg.content}</p> : <MarkdownRenderer content={msg.text || msg.content} />}
-                    </div>
-                  )}
-                  <div className="bubble-footer">
-                    <span className="timestamp">{msg.timestamp}</span>
-                    {msg.durationMs != null && (
-                      <span className="agent-duration" title="Time taken by the agent">
-                        ⏱ {formatDuration(msg.durationMs)}
-                      </span>
-                    )}
-                    {msg.sender === 'assistant' && (
-                      <button className="copy-btn" onClick={() => handleCopy(msg.id, msg.text)} title="Copy message">
-                        {copiedId === msg.id ? <Check size={12} /> : <Copy size={12} />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Live Multi-Agent Swarm Execution Log Feed */}
-            {isTyping && isMultiAgentMode && (
-              <div className="agent-activity-box animate-fade-in">
-                <div className="agent-activity-header">
-                  <Activity size={14} className="animate-spin text-accent" />
-                  <span>Multi-Agent Swarm Pipeline</span>
-                  {currentProgress && (
-                    <span className="step-tag">Step {currentProgress.step}/{currentProgress.totalSteps}</span>
-                  )}
-                </div>
-
-                <div className="agent-logs-list">
-                  {agentLogs.map((log) => (
-                    <div key={log.id} className="agent-log-item animate-fade-in">
-                      <span className="agent-role-badge" style={{ color: log.agent.color }}>
-                        {getAgentRoleIcon(log.agent.id, 12)}
-                        <span className="badge-name">{log.agent.name}</span>
-                      </span>
-                      <span className="agent-log-msg">{log.message}</span>
-                      <span className="agent-log-time">{log.timestamp}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="chat-messages">
+            {messages.length === 0
+              ? <EmptyState isMultiAgentMode={isMultiAgentMode} onPick={(text) => handleSend(text)} />
+              : messages.map(renderMessage)}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Action Prompt Chips */}
-          <div className="prompt-chips-bar">
-            <button className="chip-btn" onClick={() => handleSend("Research trending AI frameworks on GitHub")}>
-              <Layers size={12} /> GitHub Research Swarm
-            </button>
-            <button className="chip-btn" onClick={() => handleSend("Open YouTube and search for Lo-Fi Beats")}>
-              <Play size={12} /> YouTube Search
-            </button>
-            <button className="chip-btn" onClick={() => handleSend("Search Google for Quantum Computing 2026")}>
-              <Globe size={12} /> Google Query
-            </button>
-          </div>
-
-          {/* Input Textarea Bar */}
-          <div className="chat-input-container">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="chat-form"
+          <form
+            className="composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+          >
+            <textarea
+              ref={inputRef}
+              rows={1}
+              className="composer-input"
+              placeholder={isMultiAgentMode ? 'Describe a task to split across agents' : 'Ask about this page, or tell Comex what to do'}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleComposerKeyDown}
+              aria-label="Message"
+            />
+            <button
+              type={isTyping ? 'button' : 'submit'}
+              className={`composer-send ${isTyping ? 'is-stop' : ''}`}
+              disabled={isTyping ? Boolean(activeTaskRef.current?.stopping) : !input.trim()}
+              onClick={isTyping ? (isMultiAgentMode ? stopSwarm : stopSingleAgent) : undefined}
+              aria-label={isTyping ? 'Stop' : 'Send'}
+              title={isTyping ? 'Stop' : 'Send (Enter)'}
             >
-              <input
-                type="text"
-                className="chat-input"
-                placeholder={isMultiAgentMode ? "Ask Multi-Agent Swarm..." : "Ask Comex AI Assistant..."}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
-              <button
-                type={isTyping && !isMultiAgentMode ? 'button' : 'submit'}
-                className={`send-btn ${isTyping && !isMultiAgentMode ? 'stop-btn' : ''}`}
-                disabled={isTyping && !isMultiAgentMode ? Boolean(activeTaskRef.current?.stopping) : !input.trim() || isTyping}
-                onClick={isTyping && !isMultiAgentMode ? stopSingleAgent : undefined}
-                aria-label={isTyping && !isMultiAgentMode ? 'Stop agent task' : 'Send message'}
-                title={isTyping && !isMultiAgentMode ? 'Stop agent task' : 'Send message'}
-              >
-                {isTyping && !isMultiAgentMode ? <span className="stop-icon" aria-hidden="true" /> : <Send size={14} />}
-              </button>
-            </form>
-          </div>
+              {isTyping ? <Square size={11} fill="currentColor" /> : <ArrowUp size={16} />}
+            </button>
+          </form>
         </>
       ) : (
-        /* Brain & Memory Inspector View */
-        <div className="brain-inspector animate-fade-in">
-          {/* Brain Stats Overview Bar */}
+        <div className="brain-inspector">
           {memoryStats && (
-            <div className="brain-stats-bar">
-              <div className="stat-pill"><span className="stat-label">User Facts:</span> <span className="stat-val">{memoryStats.usermemory_count || 0}</span></div>
-              <div className="stat-pill"><span className="stat-label">Skills:</span> <span className="stat-val">{memoryStats.skill_count || 0}</span></div>
-              <div className="stat-pill"><span className="stat-label">Reflections:</span> <span className="stat-val">{memoryStats.reflection_count || 0}</span></div>
-              <div className="stat-pill"><span className="stat-label">Artifacts:</span> <span className="stat-val">{memoryStats.artifact_count || 0}</span></div>
-            </div>
+            <dl className="brain-stats">
+              <div><dt>Facts</dt><dd>{memoryStats.usermemory_count || 0}</dd></div>
+              <div><dt>Skills</dt><dd>{memoryStats.skill_count || 0}</dd></div>
+              <div><dt>Reflections</dt><dd>{memoryStats.reflection_count || 0}</dd></div>
+              <div><dt>Artifacts</dt><dd>{memoryStats.artifact_count || 0}</dd></div>
+            </dl>
           )}
 
-          {/* Sub-tabs */}
-          <div className="brain-nav-tabs">
-            <button
-              className={`brain-tab-btn ${brainSection === 'user_memory' ? 'active' : ''}`}
-              onClick={() => setBrainSection('user_memory')}
-            >
-              <User size={13} />
-              <span>User Facts ({userMemories.length})</span>
-            </button>
-            <button
-              className={`brain-tab-btn ${brainSection === 'adapters' ? 'active' : ''}`}
-              onClick={() => setBrainSection('adapters')}
-            >
-              <Zap size={13} />
-              <span>Fast Adapters ({adapters.length})</span>
-            </button>
-            <button
-              className={`brain-tab-btn ${brainSection === 'skills' ? 'active' : ''}`}
-              onClick={() => setBrainSection('skills')}
-            >
-              <Cpu size={13} />
-              <span>Learned Skills ({skills.length})</span>
-            </button>
-            <button
-              className={`brain-tab-btn ${brainSection === 'reflections' ? 'active' : ''}`}
-              onClick={() => setBrainSection('reflections')}
-            >
-              <Lightbulb size={13} />
-              <span>Task Reflections ({reflections.length})</span>
-            </button>
+          <div className="brain-nav-tabs" role="tablist" aria-label="Memory sections">
+            {[
+              ['user_memory', `Facts (${userMemories.length})`],
+              ['adapters', `Adapters (${adapters.length})`],
+              ['skills', `Skills (${skills.length})`],
+              ['reflections', `Reflections (${reflections.length})`],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={brainSection === key}
+                className={`brain-tab-btn ${brainSection === key ? 'active' : ''}`}
+                onClick={() => setBrainSection(key)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           <div className="brain-tab-content">
-            {/* 1. User Memory */}
             {brainSection === 'user_memory' && (
-              <div className="brain-memory-panel">
+              <>
                 <form className="add-memory-form" onSubmit={handleAddMemory}>
-                  <div className="add-memory-inputs">
-                    <input
-                      type="text"
-                      className="brain-input"
-                      placeholder="Key (e.g. preferred_theme)"
-                      value={newKey}
-                      onChange={e => setNewKey(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="brain-input"
-                      placeholder="Value (e.g. dark)"
-                      value={newValue}
-                      onChange={e => setNewValue(e.target.value)}
-                    />
-                    <select
-                      className="brain-select"
-                      value={newCategory}
-                      onChange={e => setNewCategory(e.target.value)}
-                    >
-                      <option value="preference">preference</option>
-                      <option value="constraint">constraint</option>
-                      <option value="profile">profile</option>
+                  <input type="text" className="brain-input" placeholder="Key, e.g. preferred_airline" value={newKey} onChange={e => setNewKey(e.target.value)} aria-label="Fact key" />
+                  <input type="text" className="brain-input" placeholder="Value, e.g. IndiGo" value={newValue} onChange={e => setNewValue(e.target.value)} aria-label="Fact value" />
+                  <div className="add-memory-row">
+                    <select className="brain-select" value={newCategory} onChange={e => setNewCategory(e.target.value)} aria-label="Fact category">
+                      <option value="preference">Preference</option>
+                      <option value="constraint">Constraint</option>
+                      <option value="profile">Profile</option>
                     </select>
+                    <button type="submit" className="btn btn-primary" disabled={!newKey.trim() || !newValue.trim()}>
+                      <Plus size={13} /> Save fact
+                    </button>
                   </div>
-                  <button type="submit" className="add-memory-btn" disabled={!newKey.trim() || !newValue.trim()}>
-                    <Plus size={13} /> Save Fact
-                  </button>
                 </form>
-
                 <div className="brain-items-list">
                   {userMemories.length === 0 ? (
-                    <div className="brain-empty">No user facts saved yet. The agent automatically learns facts or you can add them above.</div>
-                  ) : (
-                    userMemories.map(m => (
-                      <div key={m.id || m.key} className="brain-card memory-card">
-                        <div className="card-header">
-                          <span className="card-badge">{m.category}</span>
-                          <span className="card-key">{m.key}</span>
-                          <button
-                            className="card-del-btn"
-                            onClick={() => handleDeleteMemory(m.key)}
-                            title="Delete Fact"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                        <div className="card-value">{m.value}</div>
-                        {m.updated_at && <div className="card-time">{new Date(m.updated_at).toLocaleString()}</div>}
+                    <p className="brain-empty">No saved facts yet. Comex learns them as you work, or you can add one above.</p>
+                  ) : userMemories.map(m => (
+                    <div key={m.id || m.key} className="brain-card">
+                      <div className="card-header">
+                        <span className="card-badge">{m.category}</span>
+                        <span className="card-key">{m.key}</span>
+                        <button type="button" className="icon-btn icon-btn-sm" onClick={() => handleDeleteMemory(m.key)} aria-label={`Delete ${m.key}`}>
+                          <Trash2 size={13} />
+                        </button>
                       </div>
-                    ))
-                  )}
+                      <div className="card-value">{m.value}</div>
+                      {m.updated_at && <div className="card-time">{new Date(m.updated_at).toLocaleString()}</div>}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </>
             )}
 
-            {/* 2. Skills */}
             {brainSection === 'skills' && (
-              <div className="brain-skills-panel">
-                <div className="skills-toolbar" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-                  <button
-                    className="add-memory-btn"
-                    style={{ fontSize: '0.72rem', padding: '4px 10px', background: '#252833', border: '1px solid #333644' }}
-                    onClick={handleConsolidateSkills}
-                    title="Consolidate duplicate and near-identical skills into generalized entries"
-                  >
-                    <Cpu size={12} /> Consolidate & Deduplicate
+              <>
+                <div className="brain-toolbar">
+                  <button type="button" className="btn btn-secondary" onClick={handleConsolidateSkills} title="Merge duplicate and near-identical skills">
+                    Merge duplicates
                   </button>
                 </div>
                 <div className="brain-items-list">
                   {skills.length === 0 ? (
-                    <div className="brain-empty">No reusable interaction skills distilled yet. The agent self-distills skills after novel tasks.</div>
-                  ) : (
-                    skills.map(s => (
-                      <div key={s.id} className="brain-card skill-card">
-                        <div className="card-header">
-                          <span className="card-badge skill-badge">{s.domain}</span>
-                          <span className="card-key">{s.name}</span>
-                          <button
-                            className="card-del-btn"
-                            onClick={() => handleDeleteSkill(s.id)}
-                            title="Delete Skill"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                        <p className="skill-desc">{s.description}</p>
-                        {s.code_snippet && (
-                          <pre className="skill-code">
-                            <code>{s.code_snippet}</code>
-                          </pre>
-                        )}
-                        <div className="skill-metrics">
-                          <span>Uses: {s.usage_count || 0}</span>
-                          <span>Success: {s.success_count || 0}</span>
-                        </div>
+                    <p className="brain-empty">No skills yet. Comex distills reusable skills after it handles something new.</p>
+                  ) : skills.map(s => (
+                    <div key={s.id} className="brain-card">
+                      <div className="card-header">
+                        <span className="card-badge">{s.domain}</span>
+                        <span className="card-key">{s.name}</span>
+                        <button type="button" className="icon-btn icon-btn-sm" onClick={() => handleDeleteSkill(s.id)} aria-label={`Delete ${s.name}`}>
+                          <Trash2 size={13} />
+                        </button>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 3. Reflections */}
-            {brainSection === 'reflections' && (
-              <div className="brain-reflections-panel">
-                <div className="brain-items-list">
-                  {reflections.length === 0 ? (
-                    <div className="brain-empty">No task self-evaluations recorded yet. Reflections run in the background after each task.</div>
-                  ) : (
-                    reflections.map(r => (
-                      <div key={r.id} className="brain-card reflection-card">
-                        <div className="card-header">
-                          <span className={`card-badge ${r.is_novel ? 'novel-badge' : 'standard-badge'}`}>
-                            {r.is_novel ? '★ Novel Task' : 'Standard Routine'}
-                          </span>
-                          <span className="card-time">{r.created_at}</span>
-                        </div>
-                        {r.novelty_reason && (
-                          <div className="reflection-section">
-                            <strong>Novelty Assessment:</strong>
-                            <p>{r.novelty_reason}</p>
-                          </div>
-                        )}
-                        {r.critique && (
-                          <div className="reflection-section">
-                            <strong>Trajectory Critique:</strong>
-                            <p>{r.critique}</p>
-                          </div>
-                        )}
-                        {r.lesson_learned && (
-                          <div className="reflection-section highlight">
-                            <strong>Lesson Learned:</strong>
-                            <p>{r.lesson_learned}</p>
-                          </div>
-                        )}
+                      <p className="card-text">{s.description}</p>
+                      {s.code_snippet && <pre className="card-code"><code>{s.code_snippet}</code></pre>}
+                      <div className="card-metrics">
+                        <span>Used {s.usage_count || 0} times</span>
+                        <span>{s.success_count || 0} successes</span>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 4. Fast Adapters */}
-            {brainSection === 'adapters' && (
-              <div className="brain-skills-panel">
-                <div className="brain-items-list">
-                  {adapters.length === 0 ? (
-                    <div className="brain-empty">
-                      No compiled site adapters yet. When you complete routine actions, Comex automatically distills them into sub-second Fast-Path adapters.
                     </div>
-                  ) : (
-                    adapters.map(a => (
-                      <div key={a.id} className="brain-card skill-card">
-                        <div className="card-header">
-                          <span className={`card-badge ${a.status === 'active' ? 'skill-badge' : 'warn'}`}>
-                            {a.domain} ({a.status})
-                          </span>
-                          <span className="card-key">{a.name}</span>
-                          <button
-                            className="card-del-btn"
-                            onClick={() => handleDeleteAdapter(a.id)}
-                            title="Delete Adapter"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                        <p className="skill-desc"><strong>Intent:</strong> {a.action_intent}</p>
-                        {a.code_template && (
-                          <pre className="skill-code">
-                            <code>{a.code_template}</code>
-                          </pre>
-                        )}
-                        <div className="skill-metrics">
-                          <span>⚡ Successes: {a.success_count || 0}</span>
-                          <span>Failures: {a.failure_count || 0}</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  ))}
                 </div>
+              </>
+            )}
+
+            {brainSection === 'reflections' && (
+              <div className="brain-items-list">
+                {reflections.length === 0 ? (
+                  <p className="brain-empty">No reflections yet. Comex reviews each task in the background after it finishes.</p>
+                ) : reflections.map(r => (
+                  <div key={r.id} className="brain-card">
+                    <div className="card-header">
+                      <span className={`card-badge ${r.is_novel ? 'card-badge-accent' : ''}`}>{r.is_novel ? 'New kind of task' : 'Routine'}</span>
+                      <span className="card-time">{r.created_at}</span>
+                    </div>
+                    {r.critique && <p className="card-text">{r.critique}</p>}
+                    {r.lesson_learned && (
+                      <p className="card-lesson"><strong>Lesson:</strong> {r.lesson_learned}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {brainSection === 'adapters' && (
+              <div className="brain-items-list">
+                {adapters.length === 0 ? (
+                  <p className="brain-empty">No adapters yet. Routine actions you repeat are compiled into fast adapters automatically.</p>
+                ) : adapters.map(a => (
+                  <div key={a.id} className="brain-card">
+                    <div className="card-header">
+                      <span className={`card-badge ${a.status === 'active' ? 'card-badge-accent' : ''}`}>{a.domain}</span>
+                      <span className="card-key">{a.name}</span>
+                      <button type="button" className="icon-btn icon-btn-sm" onClick={() => handleDeleteAdapter(a.id)} aria-label={`Delete ${a.name}`}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <p className="card-text">{a.action_intent}</p>
+                    {a.code_template && <pre className="card-code"><code>{a.code_template}</code></pre>}
+                    <div className="card-metrics">
+                      <span>{a.status}</span>
+                      <span>{a.success_count || 0} successes</span>
+                      <span>{a.failure_count || 0} failures</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
-
-    </div>
+    </aside>
   );
+}
+
+function ElapsedTime({ since }) {
+  const now = useNow(Boolean(since));
+  if (!since) return null;
+  return <span className="elapsed">{formatDuration(now - since)}</span>;
 }

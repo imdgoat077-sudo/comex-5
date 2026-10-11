@@ -85,3 +85,6 @@ test_fts.db*
 # Local Tool States
 .claude/
 
+
+# graphify generated knowledge graph (rebuild with: graphify update .)
+graphify-out/

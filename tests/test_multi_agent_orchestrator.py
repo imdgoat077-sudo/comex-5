@@ -150,8 +150,9 @@ async def test_two_workers_separate_tabs_and_leases(orchestrator, lease_registry
     w_b = assigned_leases["worker_b"]
     assert w_a["worker_id"] != w_b["worker_id"]
     assert w_a["tab_id"] != w_b["tab_id"]
-    assert w_a["tab_id"] == "tab_task_a"
-    assert w_b["tab_id"] == "tab_task_b"
+    # Tab ids are derived from the task id and made unique per run
+    assert w_a["tab_id"].startswith("tab_task_a_")
+    assert w_b["tab_id"].startswith("tab_task_b_")
 
     # Verify leases were active during execution and released upon completion
     assert lease_registry.get_active_lease(w_a["worker_id"]) is None
