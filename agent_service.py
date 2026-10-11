@@ -374,6 +374,21 @@ class AgentResponse(BaseModel):
     stopped: bool = False
     durationMs: int | None = None
 
+class OrchestrateTaskSpec(BaseModel):
+    id: str
+    description: str
+    dependencies: list[str] | None = None
+    deadline_seconds: float | None = 60.0
+    requires_browser: bool | None = True
+    url: str | None = None
+    sensitive_action: bool | None = False
+    approved: bool | None = False
+
+class OrchestrateRequest(BaseModel):
+    user_request: str
+    tasks: list[OrchestrateTaskSpec] | None = None
+    contextToken: str | None = None
+
 active_tasks: dict[str, asyncio.Task] = {}
 
 import websockets
@@ -2469,6 +2484,76 @@ async def stop_agent(payload: dict):
 
     task.cancel()
     return {"success": True, "stopped": True, "taskId": task_id}
+
+_orchestrator_instance = None
+
+def _get_orchestrator():
+    global _orchestrator_instance
+    if _orchestrator_instance is None:
+        tool_svc = _get_tool_service()
+        from services.orchestrator import MultiAgentOrchestrator
+        from nervous.action_policy import get_lease_registry, get_target_registry
+        _orchestrator_instance = MultiAgentOrchestrator(
+            tool_service=tool_svc,
+            lease_registry=get_lease_registry(),
+            target_registry=get_target_registry(),
+            max_concurrency=2,
+        )
+    return _orchestrator_instance
+
+@app.post("/agent/orchestrate")
+async def orchestrate_workflow(req: OrchestrateRequest, raw_req: Request = None):
+    orch = _get_orchestrator()
+    task_objs = None
+    if req.tasks:
+        from services.orchestrator import OrchestratorTask
+        task_objs = []
+        for t in req.tasks:
+            task_objs.append(OrchestratorTask(
+                id=t.id,
+                description=t.description,
+                dependencies=t.dependencies or [],
+                deadline_seconds=t.deadline_seconds or 60.0,
+                requires_browser=t.requires_browser if t.requires_browser is not None else True,
+                url=t.url,
+                sensitive_action=t.sensitive_action or False,
+                approved=t.approved or False,
+            ))
+    try:
+        run = orch.create_run(req.user_request, task_objs)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    res = await orch.execute_run(run)
+    return {
+        "success": not res.has_failures,
+        "run_id": run.id,
+        "status": run.status.value,
+        "summary": res.summary,
+        "task_results": {
+            tid: {
+                "findings": r.findings,
+                "success": r.success,
+                "sources": r.source_urls,
+                "error": r.error,
+                "worker_id": r.worker_id,
+                "tab_id": r.tab_id,
+            }
+            for tid, r in res.task_results.items()
+        },
+        "sources": res.sources,
+        "missing_information": res.missing_information,
+        "duration_ms": res.execution_duration_ms,
+    }
+
+@app.post("/agent/orchestrate/stop")
+async def stop_orchestration(payload: dict):
+    run_id = payload.get("runId") or payload.get("run_id")
+    if not run_id:
+        return {"success": False, "error": "run_id required."}
+    orch = _get_orchestrator()
+    stopped = orch.cancel_run(run_id)
+    return {"success": stopped, "run_id": run_id}
 
 @app.get("/cdp/targets")
 async def list_cdp_targets():
